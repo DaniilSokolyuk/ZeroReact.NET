@@ -1,4 +1,4 @@
-# ZeroReact.NET
+# [Work in progress] ZeroReact.NET
 Almost zero allocation,  truly async 
 
 
