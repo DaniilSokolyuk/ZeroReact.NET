@@ -22,7 +22,8 @@ namespace ZeroReact
         private readonly IReactIdGenerator _reactIdGenerator;
         private readonly IJavaScriptEngineFactory _javaScriptEngineFactory;
 
-        public ReactComponent(ReactConfiguration configuration, IReactIdGenerator reactIdGenerator, IJavaScriptEngineFactory javaScriptEngineFactory)
+        public ReactComponent(ReactConfiguration configuration, IReactIdGenerator reactIdGenerator,
+            IJavaScriptEngineFactory javaScriptEngineFactory)
         {
             _configuration = configuration;
             _reactIdGenerator = reactIdGenerator;
@@ -31,16 +32,19 @@ namespace ZeroReact
             ExceptionHandler = _configuration.ExceptionHandler;
         }
 
-        private static readonly ConcurrentDictionary<string, bool> _componentNameValidCache = new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);
+        private static readonly ConcurrentDictionary<string, bool> _componentNameValidCache =
+            new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);
 
         /// <summary>
         /// Regular expression used to validate JavaScript identifiers. Used to ensure component
         /// names are valid.
         /// Based off https://gist.github.com/Daniel15/3074365
         /// </summary>
-        private static readonly Regex _identifierRegex = new Regex(@"^[a-zA-Z_$][0-9a-zA-Z_$]*(?:\[(?:"".+""|\'.+\'|\d+)\])*?$", RegexOptions.Compiled);
+        private static readonly Regex _identifierRegex =
+            new Regex(@"^[a-zA-Z_$][0-9a-zA-Z_$]*(?:\[(?:"".+""|\'.+\'|\d+)\])*?$", RegexOptions.Compiled);
 
         private string _componentName;
+
         /// <summary>
         /// Gets or sets the name of the component
         /// </summary>
@@ -82,6 +86,7 @@ namespace ZeroReact
 
 
         private bool _clientOnly;
+
         /// <summary>
         /// Get or sets if this components only should be rendered client side
         /// </summary>
@@ -94,42 +99,43 @@ namespace ZeroReact
         /// <summary>
         /// Sets the props for this component
         /// </summary>
-        public object Props
-        {
-            set
-            {
-                ComponentInitialiser.Dispose();
-                ComponentInitialiser = WriteComponentInitialiser(value);
-            }
-        }
+        public object Props { get; set; }
 
         public Action<Exception, string, string> ExceptionHandler { get; set; }
 
         public virtual async Task RenderHtml()
         {
-            if (!ClientOnly)
+            if (ClientOnly) 
+                return;
+
+            using (var pooledTextWriter = new ArrayPooledTextWriter())
             {
-                using (var pooledTextWriter = new ArrayPooledTextWriter(ComponentInitialiser.Length + 40))
+                pooledTextWriter.Write(ServerOnly
+                    ? "ReactDOMServer.renderToStaticMarkup("
+                    : "ReactDOMServer.renderToString(");
+
+                var initOffset = pooledTextWriter.Length;
+                WriteComponentInitialiser(pooledTextWriter);
+                var initCount = pooledTextWriter.Length - initOffset;
+
+                pooledTextWriter.Write(')');
+
+                ExecuteEngineCode = pooledTextWriter.ToPooledCharBuffer();
+                ComponentInitialiser = new ArraySegment<char>(ExecuteEngineCode.Array, initOffset, initCount);
+            }
+
+            try
+            {
+                using (var engine = _javaScriptEngineFactory.GetEngine()) //TODO: make it async
                 {
-                    try
-                    {
-                        pooledTextWriter.Write(ServerOnly ? "ReactDOMServer.renderToStaticMarkup(" : "ReactDOMServer.renderToString(");
-                        pooledTextWriter.Write(ComponentInitialiser.Array, 0, ComponentInitialiser.Length);
-                        pooledTextWriter.Write(')');
+                    var asChakra = (ChakraCoreJsEngine) engine.InnerEngine; //and remove this
 
-                        using (var engine = _javaScriptEngineFactory.GetEngine()) //TODO: make it async
-                        using (var executeHtmlCharBuffer = pooledTextWriter.ToPooledCharBuffer())
-                        {
-                            var asChakra = (ChakraCoreJsEngine)engine.InnerEngine; //we know it)
-
-                            Html = await asChakra.EvaluateUtf16StringAsync(executeHtmlCharBuffer);
-                        }
-                    }
-                    catch (JsRuntimeException ex)
-                    {
-                        ExceptionHandler(ex, ComponentName, ContainerId);
-                    }
+                    Html = await asChakra.EvaluateUtf16StringAsync(ExecuteEngineCode);
                 }
+            }
+            catch (JsRuntimeException ex)
+            {
+                ExceptionHandler(ex, ComponentName, ContainerId);
             }
         }
 
@@ -175,34 +181,48 @@ namespace ZeroReact
         public virtual void RenderJavaScript(TextWriter writer)
         {
             writer.Write(ClientOnly ? "ReactDOM.render(" : "ReactDOM.hydrate(");
-            writer.Write(ComponentInitialiser.Array, 0, ComponentInitialiser.Length);
+
+            if (ComponentInitialiser.Array == null)
+            {
+                //render html is not called serialize directly :(
+                WriteComponentInitialiser(writer);
+            }
+            else
+            {
+                writer.Write(ComponentInitialiser.Array, ComponentInitialiser.Offset, ComponentInitialiser.Count);
+            }
+
             writer.Write(", document.getElementById(\"");
             writer.Write(ContainerId);
             writer.Write("\"))");
         }
 
-        protected PooledCharBuffer ComponentInitialiser { get; set; }
+        protected PooledCharBuffer ExecuteEngineCode { get; set; }
 
         protected PooledCharBuffer Html { get; set; }
 
-        protected virtual PooledCharBuffer WriteComponentInitialiser(object val)
+        /// <summary>
+        /// Slice of ExecuteEngineCode
+        /// </summary>
+        protected ArraySegment<char> ComponentInitialiser { get; set; }
+
+        protected virtual void WriteComponentInitialiser(TextWriter textWriter)
         {
-            using (var pooledTextWriter = new ArrayPooledTextWriter())
-            using (var jsonWriter = new JsonTextWriter(pooledTextWriter))
+            textWriter.Write("React.createElement(");
+            textWriter.Write(ComponentName);
+            textWriter.Write(", ");
+
+            using (var jsonWriter = new JsonTextWriter(textWriter))
             {
                 jsonWriter.CloseOutput = false;
                 jsonWriter.AutoCompleteOnClose = false;
                 jsonWriter.ArrayPool = JsonArrayPool<char>.Instance;
                 var jsonSerializer = JsonSerializer.Create(_configuration.JsonSerializerSettings);
 
-                pooledTextWriter.Write("React.createElement(");
-                pooledTextWriter.Write(ComponentName);
-                pooledTextWriter.Write(", ");
-                jsonSerializer.Serialize(jsonWriter, val);
-                pooledTextWriter.Write(')');
-
-                return pooledTextWriter.ToPooledCharBuffer();
+                jsonSerializer.Serialize(jsonWriter, Props);
             }
+
+            textWriter.Write(')');
         }
 
         /// <summary>
@@ -211,7 +231,8 @@ namespace ZeroReact
         /// <param name="componentName"></param>
         internal static void EnsureComponentNameValid(string componentName)
         {
-            if (!_componentNameValidCache.GetOrAdd(componentName, compName => compName.Split('.').All(segment => _identifierRegex.IsMatch(segment))))
+            if (!_componentNameValidCache.GetOrAdd(componentName,
+                compName => compName.Split('.').All(segment => _identifierRegex.IsMatch(segment))))
             {
                 throw new Exception($"Invalid component name '{componentName}'");
             }
@@ -219,7 +240,7 @@ namespace ZeroReact
 
         public void Dispose()
         {
-            ComponentInitialiser.Dispose();
+            ExecuteEngineCode.Dispose();
             Html.Dispose();
         }
     }

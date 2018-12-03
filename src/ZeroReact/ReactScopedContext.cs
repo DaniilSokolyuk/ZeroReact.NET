@@ -41,7 +41,7 @@ namespace ZeroReact
                 if (!component.ServerOnly)
                 {
                     component.RenderJavaScript(writer);
-                    writer.WriteLine(';');
+                    writer.Write(';');
                 }
             }
         }

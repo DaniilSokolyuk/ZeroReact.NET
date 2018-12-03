@@ -39,6 +39,7 @@ namespace ZeroReact.Sample.Webpack.AspNetCore
                     config.StartEngines = 5;
                     config.MaxEngines = 10;
                     config.MaxUsagesPerEngine = 0;
+                    config.LoadReact = false;
                 });
         }
 
