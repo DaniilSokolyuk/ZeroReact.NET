@@ -1,2 +1,7 @@
 import HelloWorld from './HelloWorld';
-export { HelloWorld };
+
+const components = {
+    HelloWorld
+};
+
+module.exports = components;

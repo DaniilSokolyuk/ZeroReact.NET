@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ZeroReact.AspNetCore;
 
 namespace ZeroReact.Sample.Webpack.AspNetCore
 {
@@ -31,10 +32,10 @@ namespace ZeroReact.Sample.Webpack.AspNetCore
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            services.AddZeroReactCore(
+            services.AddZeroReactAsp(
                 config =>
                 {
-                    config.AddScriptWithoutTransform("Sample.js");
+                    config.AddScriptWithoutTransform("~/server.bundle.js");
                     config.StartEngines = 5;
                     config.MaxEngines = 10;
                     config.MaxUsagesPerEngine = 0;
