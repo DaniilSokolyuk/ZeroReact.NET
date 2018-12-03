@@ -262,3 +262,4 @@ __pycache__/
 
 # Bundle files
 **/wwwroot/*.bundle.js
+**/Resources/*.generated.js
