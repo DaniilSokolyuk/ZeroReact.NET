@@ -9,9 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZeroReact", "src\ZeroReact\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JavaScriptEngineSwitcher.Tests", "tests\JavaScriptEngineSwitcher.Tests\JavaScriptEngineSwitcher.Tests.csproj", "{9437564B-DEBA-4E40-8A8E-E68C3F12CFBD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroReact.Benchmarks", "tests\ZeroReact.Benchmarks\ZeroReact.Benchmarks.csproj", "{CE520411-C5CD-4EFF-B2CD-DA2844D30485}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZeroReact.Benchmarks", "tests\ZeroReact.Benchmarks\ZeroReact.Benchmarks.csproj", "{CE520411-C5CD-4EFF-B2CD-DA2844D30485}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZeroReact.AspNetCore", "src\ZeroReact.AspNetCore\ZeroReact.AspNetCore.csproj", "{18F0E608-E3E1-4DD8-B65E-070AFA924F54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroReact.Sample.Webpack.AspNetCore", "src\ZeroReact.Sample.Webpack.AspNetCore\ZeroReact.Sample.Webpack.AspNetCore.csproj", "{BFF4E3CF-A477-4E8E-846F-D204345ED25F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{18F0E608-E3E1-4DD8-B65E-070AFA924F54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18F0E608-E3E1-4DD8-B65E-070AFA924F54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18F0E608-E3E1-4DD8-B65E-070AFA924F54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFF4E3CF-A477-4E8E-846F-D204345ED25F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFF4E3CF-A477-4E8E-846F-D204345ED25F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFF4E3CF-A477-4E8E-846F-D204345ED25F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFF4E3CF-A477-4E8E-846F-D204345ED25F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
