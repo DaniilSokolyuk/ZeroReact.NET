@@ -16,8 +16,9 @@ namespace ZeroReact.Benchmarks
             //    await tt.Environment_CreateComponent();
             //}
 
-            BenchmarkRunner.Run<ComponentRenderWithoutBabelBenchmarks>();
+//            BenchmarkRunner.Run<WebSimulateBenchmark>();
 
+			BenchmarkRunner.Run<SingleComponentBenchmark>();
             Console.ReadKey();
 		}
 	}
