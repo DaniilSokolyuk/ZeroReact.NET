@@ -123,25 +123,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         {
             ScriptTask task = new ScriptTask(del);
 
-            bool restoreFlow = false;
-            try
-            {
-                if (!ExecutionContext.IsFlowSuppressed())
-                {
-                    ExecutionContext.SuppressFlow();
-                    restoreFlow = true;
-                }
-
-                EnqueueTask(task);
-            }
-            finally
-            {
-                // Restore the current ExecutionContext
-                if (restoreFlow)
-                    ExecutionContext.RestoreFlow();
-            }
-
-
+            EnqueueTask(task);
 
             return task.TaskCompletionSource.Task;
         }
