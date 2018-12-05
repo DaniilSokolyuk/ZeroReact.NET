@@ -217,9 +217,7 @@ namespace ZeroReact
                 jsonWriter.CloseOutput = false;
                 jsonWriter.AutoCompleteOnClose = false;
                 jsonWriter.ArrayPool = JsonArrayPool<char>.Instance;
-                var jsonSerializer = JsonSerializer.Create(_configuration.JsonSerializerSettings);
-
-                jsonSerializer.Serialize(jsonWriter, Props);
+                _configuration.Serializer.Serialize(jsonWriter, Props);
             }
 
             textWriter.Write(')');

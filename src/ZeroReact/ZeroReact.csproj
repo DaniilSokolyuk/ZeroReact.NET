@@ -4,6 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <AssemblyName>ZeroReact</AssemblyName>
         <RootNamespace>ZeroReact</RootNamespace>
+        <LangVersion>7.1</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
