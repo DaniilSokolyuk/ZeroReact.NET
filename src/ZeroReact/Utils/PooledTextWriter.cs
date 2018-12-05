@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using JavaScriptEngineSwitcher.ChakraCore.JsRt;
 
@@ -9,58 +10,35 @@ namespace ZeroReact.Utils
 {
     public class ArrayPooledTextWriter : TextWriter
     {
-        private readonly ArrayPool<char> _pool = ArrayPool<char>.Shared;
+        private static readonly ArrayPool<char> _pagePool = ArrayPool<char>.Shared;
+        private static readonly ArrayPool<char[]> _rootPool = ArrayPool<char[]>.Shared;
 
-        public ArrayPooledTextWriter(int pageSize = 4096)
+        public ArrayPooledTextWriter(int minPageSize = 8192)
         {
-            PageSize = pageSize;
+            if (minPageSize != 4096 && minPageSize != 8192 && minPageSize != 16384)
+            {
+                throw new ArgumentOutOfRangeException(nameof(minPageSize));
+            }
+
+            _minPageSize = minPageSize;
         }
 
-        private readonly int PageSize;
+        private readonly int _minPageSize;
 
         private int _charIndex;
+        private int _pageIndex = -1;
+        private char[][] _pages = _rootPool.Rent(32);
 
-        private List<char[]> pages { get; } = new List<char[]>();
+        public int Length { get; private set; }
 
-        private char[] CurrentPage { get; set; }
-
-        public int Length
-        {
-            get
-            {
-                var length = _charIndex;
-                for (var i = 0; i < pages.Count - 1; i++)
-                {
-                    length += pages[i].Length;
-                }
-
-                return length;
-            }
-        }
-
-        public void WriteTo(TextWriter writer)
-        {
-            var length = Length;
-            if (length == 0)
-            {
-                return;
-            }
-
-            for (var i = 0; i < pages.Count; i++)
-            {
-                var page = pages[i];
-                var pageLength = Math.Min(length, page.Length);
-                writer.Write(page, index: 0, count: pageLength);
-                length -= pageLength;
-            }
-        }
-
-        public override Encoding Encoding { get; }
+        public override Encoding Encoding { get; } 
 
         public override void Write(char value)
         {
             var page = GetCurrentPage();
             page[_charIndex++] = value;
+
+            Length++;
         }
 
         public override void Write(char[] buffer)
@@ -99,6 +77,8 @@ namespace ZeroReact.Utils
 
                 count -= copyLength;
             }
+
+            Length += value.Length;
         }
 
         public override void Write(char[] buffer, int index, int count)
@@ -124,50 +104,53 @@ namespace ZeroReact.Utils
                 index += copyLength;
                 count -= copyLength;
             }
+
+            Length += count;
         }
 
-        public void Clear()
-        {
-            for (var i = pages.Count - 1; i > 0; i--)
-            {
-                var page = pages[i];
-
-                try
-                {
-                    pages.RemoveAt(i);
-                }
-                finally
-                {
-                    _pool.Return(page);
-                }
-            }
-
-            _charIndex = 0;
-            CurrentPage = pages.Count > 0 ? pages[0] : null;
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private char[] GetCurrentPage()
         {
-            if (CurrentPage == null || _charIndex == CurrentPage.Length)
+            if (_pageIndex == -1 || _charIndex == _pages[_pageIndex].Length)
             {
-                CurrentPage = NewPage();
+                var page = NewPage();
+                if (_pageIndex == _pages.Length - 1)
+                {
+                    char[][] rootPages = null;
+                    try
+                    {
+                        rootPages = _rootPool.Rent(_pages.Length * 2);
+                        Array.Copy(_pages, 0, rootPages, 0, _pageIndex + 1);
+                        _rootPool.Return(_pages);
+                        _pages = rootPages;
+                    }
+                    catch when (rootPages != null)
+                    {
+                        _rootPool.Return(rootPages);
+                        throw;
+                    }
+                }
+
+                _pages[++_pageIndex] = page;
                 _charIndex = 0;
+
+                return page;
             }
 
-            return CurrentPage;
+            return _pages[_pageIndex];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private char[] NewPage()
         {
             char[] page = null;
             try
             {
-                page = _pool.Rent(PageSize);
-                pages.Add(page);
+                page = _pagePool.Rent(_minPageSize);
             }
             catch when (page != null)
             {
-                _pool.Return(page);
+                _pagePool.Return(page);
                 throw;
             }
 
@@ -177,12 +160,14 @@ namespace ZeroReact.Utils
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            for (var i = 0; i < pages.Count; i++)
+
+            for (var i = 0; i < _pageIndex + 1; i++)
             {
-                _pool.Return(pages[i]);
+                _pagePool.Return(_pages[i]);
             }
 
-            pages.Clear();
+            _rootPool.Return(_pages);
+            _pages = null;
         }
 
         public PooledCharBuffer ToPooledCharBuffer()
@@ -194,22 +179,22 @@ namespace ZeroReact.Utils
                 return new PooledCharBuffer(Array.Empty<char>(), 0);
             }
 
-            char[] sb = _pool.Rent(length);
+            char[] charBuffer = _pagePool.Rent(length);
 
             int index = 0;
 
-            for (var i = 0; i < pages.Count; i++)
+            for (var i = 0; i < _pageIndex + 1; i++)
             {
-                var page = pages[i];
+                var page = _pages[i];
                 var pageLength = Math.Min(length, page.Length);
 
-                Array.Copy(page, 0, sb, index, pageLength);
+                Array.Copy(page, 0, charBuffer, index, pageLength);
 
                 length -= pageLength;
                 index += pageLength;
             }
 
-            return new PooledCharBuffer(sb, index);
+            return new PooledCharBuffer(charBuffer, index);
         }
 
         public override string ToString()
