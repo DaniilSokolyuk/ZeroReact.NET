@@ -24,10 +24,10 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
                 fixed (char* bufferPtr = buffer)
                 {
                     JsErrorHelpers.ThrowIfError(NativeMethods.JsCopyStringUtf16(this, start, length, (IntPtr)bufferPtr, out written));
-
-                    return new PooledCharBuffer(buffer, length);
                 }
             }
+
+            return new PooledCharBuffer(buffer, length);
         }
     }
 }

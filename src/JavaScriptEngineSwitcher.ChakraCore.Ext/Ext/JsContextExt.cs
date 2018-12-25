@@ -17,8 +17,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
             fixed (char* scriptBufferPtr = scriptBuffer.Array)
             fixed (char* sourceUrlPtr = sourceUrl.Array)
             {
-                //byte array received, HACK
-                JsErrorHelpers.ThrowIfError(NativeMethods.JsCreateExternalArrayBuffer((IntPtr)scriptBufferPtr, (uint)scriptBuffer.Length * 2, null, IntPtr.Zero, out var scriptValue));
+                JsErrorHelpers.ThrowIfError(NativeMethods.JsCreateStringUtf16((IntPtr)scriptBufferPtr, (uint)scriptBuffer.Length, out var scriptValue));
                 scriptValue.AddRef();
 
                 JsErrorHelpers.ThrowIfError(NativeMethods.JsCreateStringUtf16((IntPtr)sourceUrlPtr, (uint)sourceUrl.Length, out var sourceUrlValue));
@@ -28,7 +27,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
                 try
                 {
-                    JsErrorHelpers.ThrowIfError(NativeMethods.JsRun(scriptValue, sourceContext, sourceUrlValue, JsParseScriptAttributes.ArrayBufferIsUtf16Encoded, out result));
+                    JsErrorHelpers.ThrowIfError(NativeMethods.JsRun(scriptValue, sourceContext, sourceUrlValue, JsParseScriptAttributes.None, out result));
                 }
                 finally
                 {
