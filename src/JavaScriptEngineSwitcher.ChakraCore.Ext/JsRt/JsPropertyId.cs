@@ -1,17 +1,15 @@
 ﻿using System;
-#if NET45 || NET471 || NETSTANDARD
+#if NET45 || NET471 || NETSTANDARD || NETCOREAPP2_1
 using System.Buffers;
 using System.Runtime.InteropServices;
 #endif
 using System.Text;
 #if NET40
 
-using JavaScriptEngineSwitcher.Core.Polyfills.System.Runtime.InteropServices;
+using PolyfillsForOldDotNet.System.Buffers;
+using PolyfillsForOldDotNet.System.Runtime.InteropServices;
 #endif
 
-#if NET40
-using JavaScriptEngineSwitcher.ChakraCore.Polyfills.System.Buffers;
-#endif
 using JavaScriptEngineSwitcher.ChakraCore.Helpers;
 
 namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
@@ -57,17 +55,20 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 				JsErrorCode errorCode = NativeMethods.JsCopyPropertyId(this, buffer, bufferSize, out length);
 				JsErrorHelpers.ThrowIfError(errorCode);
 
-				string name;
 				var byteArrayPool = ArrayPool<byte>.Shared;
 				bufferSize = length;
-				buffer = byteArrayPool.Rent((int)bufferSize);
+				int bufferLength = (int)bufferSize;
+				buffer = byteArrayPool.Rent(bufferLength + 1);
+				buffer[bufferLength] = 0;
+
+				string name;
 
 				try
 				{
 					errorCode = NativeMethods.JsCopyPropertyId(this, buffer, bufferSize, out length);
 					JsErrorHelpers.ThrowIfError(errorCode);
 
-					name = Encoding.UTF8.GetString(buffer, 0, (int)bufferSize);
+					name = Encoding.UTF8.GetString(buffer, 0, bufferLength);
 				}
 				finally
 				{
@@ -110,7 +111,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				processedName = EncodingHelpers.UnicodeToUtf8(name, out byteCount);
+				processedName = EncodingHelpers.UnicodeToAnsi(name, out byteCount);
 			}
 			else
 			{

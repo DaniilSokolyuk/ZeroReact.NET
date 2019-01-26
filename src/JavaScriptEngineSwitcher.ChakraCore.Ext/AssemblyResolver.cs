@@ -1,11 +1,12 @@
-﻿#if !NETSTANDARD
+﻿#if NETFULL
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-
 #if NET40
-using JavaScriptEngineSwitcher.Core.Polyfills.System.Runtime.InteropServices;
+
+using PolyfillsForOldDotNet.System.Runtime.InteropServices;
 #endif
+
 using JavaScriptEngineSwitcher.Core.Utilities;
 
 using JavaScriptEngineSwitcher.ChakraCore.Constants;

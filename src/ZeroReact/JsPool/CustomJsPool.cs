@@ -36,8 +36,8 @@ namespace ZeroReact.JsPool
                             continue;
                         }
 
-                        var currentUsages = _metadata.Sum(x => x.Value.UsageCount);
-                        var maxUsages = _metadata.Count * _config.MaxUsagesPerEngine;
+                        var currentUsages = _registeredEngines.Keys.Sum(x => x.UsageCount);
+                        var maxUsages = _registeredEngines.Count * _config.MaxUsagesPerEngine;
 
                         var engineAverageOverflow = currentUsages > maxUsages * 0.7;
 
@@ -59,17 +59,10 @@ namespace ZeroReact.JsPool
 
                         while (!_cancellationTokenSource.IsCancellationRequested && _enginesToMaintenance.TryDequeue(out var engine))
                         {
-                            if (!_metadata.TryGetValue(engine, out var metadata))
-                            {
-                                engine.InnerEngine?.Dispose();
-
-                                continue;
-                            }
-
-                            if (_config.MaxUsagesPerEngine > 0 && metadata.UsageCount >= _config.MaxUsagesPerEngine)
+                            if (!_registeredEngines.ContainsKey(engine) || 
+                                (_config.MaxUsagesPerEngine > 0 && engine.UsageCount >= _config.MaxUsagesPerEngine))
                             {
                                 DisposeEngine(engine);
-
                                 continue;
                             }
 
@@ -82,15 +75,9 @@ namespace ZeroReact.JsPool
 
         protected override void ReturnEngineToPoolInternal(PooledJsEngine engine)
         {
-            if (!_metadata.TryGetValue(engine, out var metadata))
-            {
-                MaintenanceEngine(engine);
-                return;
-            }
-
-            metadata.InUse = false;
-
-            if ((_config.MaxUsagesPerEngine > 0 && metadata.UsageCount >= _config.MaxUsagesPerEngine) || (metadata.UsageCount % _config.GarbageCollectionInterval == 0))
+            if (!_registeredEngines.ContainsKey(engine) || 
+                (_config.MaxUsagesPerEngine > 0 && engine.UsageCount >= _config.MaxUsagesPerEngine) || 
+                (engine.UsageCount % _config.GarbageCollectionInterval == 0))
             {
                 MaintenanceEngine(engine);
             }

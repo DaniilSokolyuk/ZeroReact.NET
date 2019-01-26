@@ -47,7 +47,7 @@ namespace ZeroReact.Benchmarks
 					config.StartEngines = 2;
 					config.MaxEngines = 2;
 					config.MaxUsagesPerEngine = 0;
-					config.AllowJavaScriptPrecompilation = true;
+					config.AllowJavaScriptPrecompilation = false;
 				});
 
 			sp = services.BuildServiceProvider();
@@ -66,7 +66,7 @@ namespace ZeroReact.Benchmarks
 			var configuration = ReactSiteConfiguration.Configuration;
 			configuration
 				.SetReuseJavaScriptEngines(true)
-				.SetAllowJavaScriptPrecompilation(true);
+				.SetAllowJavaScriptPrecompilation(false);
 			configuration
 				.SetStartEngines(2)
 				.SetMaxEngines(2)

@@ -1,11 +1,11 @@
 ﻿
 
    --------------------------------------------------------------------------------
-              README file for JS Engine Switcher: ChakraCore v3.0.0 RC 1
+                 README file for JS Engine Switcher: ChakraCore v3.0.2
 
    --------------------------------------------------------------------------------
 
-           Copyright (c) 2013-2018 Andrey Taritsyn - http://www.taritsyn.ru
+           Copyright (c) 2013-2019 Andrey Taritsyn - http://www.taritsyn.ru
 
 
    ===========
@@ -30,11 +30,10 @@
    =============
    RELEASE NOTES
    =============
-   1. ChakraCore was updated to version 1.11.1;
-   2. No longer used the old ChakraCore API for Windows (Internet Explorer-like API);
-   3. Optimized a memory usage;
-   4. `MaxStackSize` configuration property was removed from the version for .NET
-      Standard 1.3.
+  1. Reduced a memory consumption in cases, where not used the embedding of objects
+     and types;
+  2. Fixed a wrong implementation of destruction of the embedded delegates;
+  3. Accelerated a conversion of script types to host types.
 
    =============
    DOCUMENTATION

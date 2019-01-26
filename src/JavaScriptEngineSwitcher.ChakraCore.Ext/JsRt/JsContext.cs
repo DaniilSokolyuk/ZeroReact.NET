@@ -1,12 +1,4 @@
 ﻿using System;
-#if NET45 || NET471 || NETSTANDARD
-using System.Runtime.InteropServices;
-#endif
-using System.Text;
-#if NET40
-
-using JavaScriptEngineSwitcher.Core.Polyfills.System.Runtime.InteropServices;
-#endif
 
 namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 {
@@ -164,7 +156,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 		public static JsValue ParseScript(string script, JsSourceContext sourceContext, string sourceUrl,
 			ref JsParseScriptAttributes parseAttributes)
 		{
-			JsValue scriptValue = CreateExternalArrayBufferFromScriptCode(script, ref parseAttributes);
+			JsValue scriptValue = JsValue.FromString(script);
 			scriptValue.AddRef();
 
 			JsValue sourceUrlValue = JsValue.FromString(sourceUrl);
@@ -215,8 +207,8 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
 			try
 			{
-				JsErrorCode errorCode = NativeMethods.JsParseSerialized(bufferValue, scriptLoadCallback, sourceContext,
-					sourceUrlValue, out result);
+				JsErrorCode errorCode = NativeMethods.JsParseSerialized(bufferValue, scriptLoadCallback,
+					sourceContext, sourceUrlValue, out result);
 				JsErrorHelpers.ThrowIfError(errorCode);
 			}
 			finally
@@ -243,7 +235,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 		public static JsValue RunScript(string script, JsSourceContext sourceContext, string sourceUrl,
 			ref JsParseScriptAttributes parseAttributes)
 		{
-			JsValue scriptValue = CreateExternalArrayBufferFromScriptCode(script, ref parseAttributes);
+			JsValue scriptValue = JsValue.FromString(script);
 			scriptValue.AddRef();
 
 			JsValue sourceUrlValue = JsValue.FromString(sourceUrl);
@@ -284,18 +276,18 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 		public static JsValue RunSerializedScript(string script, byte[] buffer,
 			JsSerializedLoadScriptCallback scriptLoadCallback, JsSourceContext sourceContext, string sourceUrl)
 		{
-			JsValue result;
-
 			JsValue bufferValue = JsValue.CreateExternalArrayBuffer(buffer);
 			bufferValue.AddRef();
 
 			JsValue sourceUrlValue = JsValue.FromString(sourceUrl);
 			sourceUrlValue.AddRef();
 
+			JsValue result;
+
 			try
 			{
-				JsErrorCode errorCode = NativeMethods.JsRunSerialized(bufferValue, scriptLoadCallback, sourceContext,
-					sourceUrlValue, out result);
+				JsErrorCode errorCode = NativeMethods.JsRunSerialized(bufferValue, scriptLoadCallback,
+					sourceContext, sourceUrlValue, out result);
 				JsErrorHelpers.ThrowIfError(errorCode);
 			}
 			finally
@@ -325,7 +317,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 		/// <returns>The buffer to put the serialized script into</returns>
 		public static byte[] SerializeScript(string script, ref JsParseScriptAttributes parseAttributes)
 		{
-			JsValue scriptValue = CreateExternalArrayBufferFromScriptCode(script, ref parseAttributes);
+			JsValue scriptValue = JsValue.FromString(script);
 			scriptValue.AddRef();
 
 			JsValue bufferValue;
@@ -343,32 +335,6 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 			byte[] buffer = bufferValue.ArrayBufferBytes;
 
 			return buffer;
-		}
-
-		/// <summary>
-		/// Creates a Javascript <c>ArrayBuffer</c> object from script code
-		/// </summary>
-		/// <param name="script">Script code</param>
-		/// <param name="parseAttributes">Attribute mask for parsing the script</param>
-		/// <returns>The new <c>ArrayBuffer</c> object</returns>
-		private static JsValue CreateExternalArrayBufferFromScriptCode(string script,
-			ref JsParseScriptAttributes parseAttributes)
-		{
-			Encoding encoding;
-
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				encoding = Encoding.Unicode;
-				parseAttributes |= JsParseScriptAttributes.ArrayBufferIsUtf16Encoded;
-			}
-			else
-			{
-				encoding = Encoding.UTF8;
-			}
-
-			JsValue scriptValue = JsValue.CreateExternalArrayBuffer(script, encoding);
-
-			return scriptValue;
 		}
 
 		/// <summary>

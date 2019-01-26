@@ -146,7 +146,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
 		[DllImport(DllName.Universal)]
 		internal static extern JsErrorCode JsCreateExternalObject(IntPtr data,
-			JsObjectFinalizeCallback finalizeCallback, out JsValue obj);
+			JsFinalizeCallback finalizeCallback, out JsValue obj);
 
 		[DllImport(DllName.Universal)]
 		internal static extern JsErrorCode JsConvertValueToObject(JsValue value, out JsValue obj);
@@ -240,9 +240,9 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
 		[DllImport(DllName.Universal)]
 		internal static extern JsErrorCode JsCreateExternalArrayBuffer(IntPtr data, uint byteLength,
-			JsObjectFinalizeCallback finalizeCallback, IntPtr callbackState, out JsValue result);
+			JsFinalizeCallback finalizeCallback, IntPtr callbackState, out JsValue result);
 
-        [DllImport(DllName.Universal)]
+		[DllImport(DllName.Universal)]
 		internal static extern JsErrorCode JsCreateTypedArray(JsTypedArrayType arrayType, JsValue arrayBuffer,
 			uint byteOffset, uint elementLength, out JsValue result);
 
@@ -327,13 +327,13 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
 		#region Hosting
 
-		[DllImport(DllName.Universal)]
+		[DllImport(DllName.Universal, CharSet = CharSet.Ansi)]
 		internal static extern JsErrorCode JsCreateString(string content, UIntPtr length, out JsValue value);
 
 		[DllImport(DllName.Universal, CharSet = CharSet.Unicode)]
 		internal static extern JsErrorCode JsCreateStringUtf16(string content, UIntPtr length, out JsValue value);
 
-		[DllImport(DllName.Universal)]
+		[DllImport(DllName.Universal, CharSet = CharSet.Ansi)]
 		internal static extern JsErrorCode JsCopyString(JsValue value, byte[] buffer, UIntPtr bufferSize,
 			out UIntPtr length);
 
@@ -349,7 +349,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 		internal static extern JsErrorCode JsRun(JsValue script, JsSourceContext sourceContext, JsValue sourceUrl,
 			JsParseScriptAttributes parseAttributes, out JsValue result);
 
-		[DllImport(DllName.Universal)]
+		[DllImport(DllName.Universal, CharSet = CharSet.Ansi)]
 		internal static extern JsErrorCode JsCreatePropertyId(string name, UIntPtr length,
 			out JsPropertyId propertyId);
 

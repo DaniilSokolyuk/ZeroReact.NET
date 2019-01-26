@@ -17,6 +17,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.Ext.Self
 
         public PooledCharBuffer Generate()
         {
+            
             var chars = ArrayPool<char>.Shared.Rent(reactIdLength);
             Array.Copy(reactPrefix, 0, chars, 0, reactPrefix.Length);
 

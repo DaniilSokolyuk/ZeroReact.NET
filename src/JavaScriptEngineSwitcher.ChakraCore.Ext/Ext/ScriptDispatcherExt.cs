@@ -14,7 +14,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         /// Queue of script tasks
         /// </summary>
         private readonly Queue<ScriptTask> _queue = new Queue<ScriptTask>();
-
+        
         /// <summary>
         /// Constructs an instance of script dispatcher
         /// </summary>
@@ -24,12 +24,11 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         {
             var thread = new Thread(StartThread, maxStackSize)
             {
-                Name = "ChakraCore Thread",
-                IsBackground = true
+                IsBackground = true,
+                Name = "ChakraCore Thread"
             };
             thread.Start();
         }
-
 
         [MethodImpl((MethodImplOptions)256 /* AggressiveInlining */)]
         private void VerifyNotDisposed()

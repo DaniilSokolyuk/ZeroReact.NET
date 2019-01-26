@@ -1,14 +1,13 @@
 ﻿using System;
-#if NET45 || NET471 || NETSTANDARD
+#if NET45 || NET471 || NETSTANDARD || NETCOREAPP2_1
 using System.Buffers;
 #endif
 using System.Runtime.InteropServices;
 using System.Text;
 #if NET40
 
-using JavaScriptEngineSwitcher.Core.Polyfills.System.Runtime.InteropServices;
-
-using JavaScriptEngineSwitcher.ChakraCore.Polyfills.System.Buffers;
+using PolyfillsForOldDotNet.System.Buffers;
+using PolyfillsForOldDotNet.System.Runtime.InteropServices;
 #endif
 
 namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
@@ -383,10 +382,10 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 		/// <remarks>
 		/// Requires an active script context.
 		/// </remarks>
-		/// <param name="data">External data that the object will represent. May be null</param>
+		/// <param name="data">External data that the object will represent. May be null.</param>
 		/// <param name="finalizer">The callback for when the object is finalized. May be null.</param>
 		/// <returns>The new <c>Object</c></returns>
-		public static JsValue CreateExternalObject(IntPtr data, JsObjectFinalizeCallback finalizer)
+		public static JsValue CreateExternalObject(IntPtr data, JsFinalizeCallback finalizer)
 		{
 			JsValue reference;
 			JsErrorHelpers.ThrowIfError(NativeMethods.JsCreateExternalObject(data, finalizer, out reference));
@@ -451,74 +450,24 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 		/// <returns>The new <c>ArrayBuffer</c> object</returns>
 		public static JsValue CreateExternalArrayBuffer(byte[] buffer)
 		{
-			IntPtr bufferPtr;
-			int bufferLength;
-			JsObjectFinalizeCallback finalizeCallback;
-
-			if (buffer != null)
+			if (buffer == null)
 			{
-				bufferLength = buffer.Length;
-
-				bufferPtr = Marshal.AllocHGlobal(bufferLength);
-				Marshal.Copy(buffer, 0, bufferPtr, bufferLength);
-
-				finalizeCallback = DefaultExternalBufferFinalizeCallback.Instance;
+				throw new ArgumentNullException(nameof(buffer));
 			}
-			else
-			{
-				bufferLength = 0;
-				bufferPtr = IntPtr.Zero;
-				finalizeCallback = null;
-			}
+
+			int bufferLength = buffer.Length;
+			IntPtr bufferPtr = Marshal.AllocHGlobal(bufferLength + 1);
+
+			Marshal.Copy(buffer, 0, bufferPtr, bufferLength);
+			Marshal.WriteByte(bufferPtr, bufferLength, 0);
 
 			JsValue reference;
 			JsErrorCode errorCode = NativeMethods.JsCreateExternalArrayBuffer(bufferPtr, (uint)bufferLength,
-				finalizeCallback, bufferPtr, out reference);
+				DefaultExternalBufferFinalizeCallback.Instance, bufferPtr, out reference);
 			JsErrorHelpers.ThrowIfError(errorCode);
 
 			return reference;
 		}
-
-		/// <summary>
-		/// Creates a Javascript <c>ArrayBuffer</c> object to access external memory
-		/// </summary>
-		/// <remarks>Requires an active script context.</remarks>
-		/// <param name="value">String value</param>
-		/// <param name="encoding">Character encoding</param>
-		/// <returns>The new <c>ArrayBuffer</c> object</returns>
-		public static unsafe JsValue CreateExternalArrayBuffer(string value, Encoding encoding)
-		{
-			int bufferLength;
-			IntPtr bufferPtr;
-			JsObjectFinalizeCallback finalizeCallback;
-
-			if (value != null)
-			{
-				bufferLength = encoding.GetByteCount(value);
-				bufferPtr = Marshal.AllocHGlobal(bufferLength);
-
-				fixed (char* pScript = value)
-				{
-					encoding.GetBytes(pScript, value.Length, (byte*)bufferPtr, bufferLength);
-				}
-
-				finalizeCallback = DefaultExternalBufferFinalizeCallback.Instance;
-			}
-			else
-			{
-				bufferLength = 0;
-				bufferPtr = IntPtr.Zero;
-				finalizeCallback = null;
-			}
-
-			JsValue reference;
-			JsErrorCode errorCode = NativeMethods.JsCreateExternalArrayBuffer(bufferPtr, (uint)bufferLength,
-				finalizeCallback, bufferPtr, out reference);
-			JsErrorHelpers.ThrowIfError(errorCode);
-
-			return reference;
-		}
-
 
 		/// <summary>
 		/// Creates a new JavaScript error object
@@ -735,7 +684,8 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
 				var charArrayPool = ArrayPool<char>.Shared;
 				length = (int)written;
-				buffer = charArrayPool.Rent(length);
+				buffer = charArrayPool.Rent(length + 1);
+				buffer[length] = '\0';
 
 				try
 				{
@@ -760,14 +710,16 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
 				var byteArrayPool = ArrayPool<byte>.Shared;
 				bufferSize = length;
-				buffer = byteArrayPool.Rent((int)bufferSize);
+				int bufferLength = (int)bufferSize;
+				buffer = byteArrayPool.Rent(bufferLength + 1);
+				buffer[bufferLength] = 0;
 
 				try
 				{
 					errorCode = NativeMethods.JsCopyString(this, buffer, bufferSize, out length);
 					JsErrorHelpers.ThrowIfError(errorCode);
 
-					result = Encoding.UTF8.GetString(buffer, 0, (int)bufferSize);
+					result = Encoding.UTF8.GetString(buffer, 0, bufferLength);
 				}
 				finally
 				{
