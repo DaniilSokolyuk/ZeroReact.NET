@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using JavaScriptEngineSwitcher.ChakraCore;
@@ -121,7 +122,7 @@ namespace ZeroReact
                 pooledTextWriter.Write(')');
 
                 ExecuteEngineCode = pooledTextWriter.ToPooledCharBuffer();
-                ComponentInitialiser = new ArraySegment<char>(ExecuteEngineCode.Array, initOffset, initCount);
+                ComponentInitialiser = ExecuteEngineCode.Memory.Slice(initOffset, initCount);
             }
 
             try
@@ -143,7 +144,7 @@ namespace ZeroReact
         {
             if (ServerOnly)
             {
-                writer.Write(Html.Array, 0, Html.Length);
+                writer.Write(Html.ReadOnlyMemory.Span);
                 return;
             }
 
@@ -163,7 +164,7 @@ namespace ZeroReact
 
             if (!ClientOnly)
             {
-                writer.Write(Html.Array, 0, Html.Length);
+                writer.Write(Html.ReadOnlyMemory.Span);
             }
 
             writer.Write("</");
@@ -182,14 +183,14 @@ namespace ZeroReact
         {
             writer.Write(ClientOnly ? "ReactDOM.render(" : "ReactDOM.hydrate(");
 
-            if (ComponentInitialiser.Array == null)
+            if (ComponentInitialiser.IsEmpty)
             {
                 //render html is not called serialize directly :(
                 WriteComponentInitialiser(writer);
             }
             else
             {
-                writer.Write(ComponentInitialiser.Array, ComponentInitialiser.Offset, ComponentInitialiser.Count);
+                writer.Write(ComponentInitialiser.Span);
             }
 
             writer.Write(", document.getElementById(\"");
@@ -204,7 +205,7 @@ namespace ZeroReact
         /// <summary>
         /// Slice of ExecuteEngineCode
         /// </summary>
-        protected ArraySegment<char> ComponentInitialiser { get; set; }
+        protected ReadOnlyMemory<char> ComponentInitialiser { get; set; }
 
         protected virtual void WriteComponentInitialiser(TextWriter textWriter)
         {

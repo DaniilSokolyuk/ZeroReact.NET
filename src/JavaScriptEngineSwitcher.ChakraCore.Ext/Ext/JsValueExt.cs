@@ -19,6 +19,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
             length = (int)written;
             var buffer = ArrayPool<char>.Shared.Rent(length);
 
+            
             unsafe
             {
                 fixed (char* bufferPtr = buffer)

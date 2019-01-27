@@ -2,27 +2,44 @@
 using System.Buffers;
 
 namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
-{    public readonly struct PooledCharBuffer : IMemoryOwner<char>
+{    public class PooledCharBuffer : IMemoryOwner<char>
     {
         public PooledCharBuffer(char[] array, int length)
         {
-            Array = array;
-            Length = length;
-            Memory = new Memory<char>(array, 0, length);
+            _array = array;
+            _length = length;
         }
 
-        public readonly char[] Array;
+        private char[] _array;
 
-        public readonly int Length;
+        private int _length;
 
         public void Dispose()
         {
-            if (Length > 0)
+            if (_length > 0)
             {
-                ArrayPool<char>.Shared.Return(Array);
+                ArrayPool<char>.Shared.Return(_array);
+            }
+        }
+        
+        public ReadOnlyMemory<char> ReadOnlyMemory
+        {
+            get
+            {
+                var array = _array;
+
+                return new ReadOnlyMemory<char>(array, 0, _length);
             }
         }
 
-        public Memory<char> Memory { get; }
+        public Memory<char> Memory
+        {
+            get
+            {
+                var array = _array;
+
+                return new Memory<char>(array, 0, _length);
+            }
+        }
     }
 }

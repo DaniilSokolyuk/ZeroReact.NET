@@ -201,7 +201,7 @@ namespace ZeroReact.Utils
         {
             using (var buffer = ToPooledCharBuffer())
             {
-                return new string(buffer.Array, 0, buffer.Length);
+                return new string(buffer.ReadOnlyMemory.Span);
             }
         }
     }
