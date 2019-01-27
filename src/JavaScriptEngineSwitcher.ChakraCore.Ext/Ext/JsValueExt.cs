@@ -8,7 +8,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 {
     internal partial struct JsValue
     {
-        internal PooledCharBuffer ToStringUtf16StringAsPooledBuffer()
+        internal IMemoryOwner<char> JsCopyStringUtf16()
         {
             const int start = 0;
             int length = int.MaxValue;

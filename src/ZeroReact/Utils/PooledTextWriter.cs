@@ -170,7 +170,7 @@ namespace ZeroReact.Utils
             _pages = null;
         }
 
-        public PooledCharBuffer ToPooledCharBuffer()
+        public IMemoryOwner<char> GetMemoryOwner()
         {
             var length = Length;
 
@@ -199,9 +199,9 @@ namespace ZeroReact.Utils
 
         public override string ToString()
         {
-            using (var buffer = ToPooledCharBuffer())
+            using (var buffer = GetMemoryOwner())
             {
-                return new string(buffer.ReadOnlyMemory.Span);
+                return new string(buffer.Memory.Span);
             }
         }
     }

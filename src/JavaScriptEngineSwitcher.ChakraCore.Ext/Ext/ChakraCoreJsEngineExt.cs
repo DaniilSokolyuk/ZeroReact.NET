@@ -12,27 +12,27 @@ namespace JavaScriptEngineSwitcher.ChakraCore
 {
     public partial class ChakraCoreJsEngine
     {
-        private readonly IdGenerator idGenerator = new IdGenerator();
+        private readonly IdGenerator _idGenerator = new IdGenerator();
 
-        public PooledCharBuffer EvaluateUtf16String(PooledCharBuffer utf16script) => _dispatcher.Invoke(() => Evaluate(utf16script));
+        public IMemoryOwner<char> EvaluateUtf16String(ReadOnlyMemory<char> utf16Script) => _dispatcher.Invoke(() => Evaluate(utf16Script.Span));
 
-        public Task<PooledCharBuffer> EvaluateUtf16StringAsync(PooledCharBuffer utf16script) => _dispatcher.InvokeAsync(() => Evaluate(utf16script));
+        public Task<IMemoryOwner<char>> EvaluateUtf16StringAsync(ReadOnlyMemory<char> utf16Script) => _dispatcher.InvokeAsync(() => Evaluate(utf16Script.Span));
 
-        private PooledCharBuffer Evaluate(PooledCharBuffer utf16script)
+        private IMemoryOwner<char> Evaluate(ReadOnlySpan<char> utf16Script)
         {
-            using (var uniqueDocumentName = idGenerator.Generate())
+            using (var uniqueDocumentName = _idGenerator.Generate())
             using (CreateJsScope())
             {
                 try
                 {
                     JsValue resultValue = JsContext.RunScriptUtf16Buffer(
-                        ref utf16script,
+                        utf16Script,
                         _jsSourceContext++,
-                        uniqueDocumentName);
+                        uniqueDocumentName.Memory.Span);
 
                     var processedValue = resultValue.ConvertToString();
 
-                    return processedValue.ToStringUtf16StringAsPooledBuffer();
+                    return processedValue.JsCopyStringUtf16();
                 }
                 catch (JsException e)
                 {

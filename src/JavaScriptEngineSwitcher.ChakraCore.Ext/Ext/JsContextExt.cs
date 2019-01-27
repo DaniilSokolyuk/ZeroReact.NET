@@ -10,19 +10,19 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
     internal partial struct JsContext
     {
         public static unsafe JsValue RunScriptUtf16Buffer(
-            ref PooledCharBuffer scriptBuffer,
+            ReadOnlySpan<char> scriptBuffer,
             JsSourceContext sourceContext,
-            PooledCharBuffer sourceUrl)
+            ReadOnlySpan<char> sourceUrl)
         {
             //not work, because fixed.. https://github.com/dotnet/corefx/issues/31651 PInvoke marshaling will pin the pointer for ref byte hash arguments that will pin the whole block as side-effect
             
-            fixed (char* scriptBufferPtr = &MemoryMarshal.GetReference(scriptBuffer.Memory.Span))
-            fixed (char* sourceUrlPtr = &MemoryMarshal.GetReference(sourceUrl.Memory.Span))
+            fixed (char* scriptBufferPtr = &MemoryMarshal.GetReference(scriptBuffer))
+            fixed (char* sourceUrlPtr = &MemoryMarshal.GetReference(sourceUrl))
             {
-                JsErrorHelpers.ThrowIfError(NativeMethods.JsCreateStringUtf16((IntPtr)scriptBufferPtr, (uint)scriptBuffer.Memory.Length, out var scriptValue));
+                JsErrorHelpers.ThrowIfError(NativeMethods.JsCreateStringUtf16((IntPtr)scriptBufferPtr, (uint)scriptBuffer.Length, out var scriptValue));
                 scriptValue.AddRef();
 
-                JsErrorHelpers.ThrowIfError(NativeMethods.JsCreateStringUtf16((IntPtr)sourceUrlPtr, (uint)sourceUrl.Memory.Length, out var sourceUrlValue));
+                JsErrorHelpers.ThrowIfError(NativeMethods.JsCreateStringUtf16((IntPtr)sourceUrlPtr, (uint)sourceUrl.Length, out var sourceUrlValue));
                 sourceUrlValue.AddRef();
 
                 JsValue result;

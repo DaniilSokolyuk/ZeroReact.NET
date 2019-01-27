@@ -2,7 +2,8 @@
 using System.Buffers;
 
 namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
-{    public class PooledCharBuffer : IMemoryOwner<char>
+{
+    public sealed class PooledCharBuffer : IMemoryOwner<char>
     {
         public PooledCharBuffer(char[] array, int length)
         {
@@ -19,16 +20,6 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
             if (_length > 0)
             {
                 ArrayPool<char>.Shared.Return(_array);
-            }
-        }
-        
-        public ReadOnlyMemory<char> ReadOnlyMemory
-        {
-            get
-            {
-                var array = _array;
-
-                return new ReadOnlyMemory<char>(array, 0, _length);
             }
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
@@ -121,7 +122,7 @@ namespace ZeroReact
 
                 pooledTextWriter.Write(')');
 
-                ExecuteEngineCode = pooledTextWriter.ToPooledCharBuffer();
+                ExecuteEngineCode = pooledTextWriter.GetMemoryOwner();
                 ComponentInitialiser = ExecuteEngineCode.Memory.Slice(initOffset, initCount);
             }
 
@@ -131,7 +132,7 @@ namespace ZeroReact
                 {
                     var asChakra = (ChakraCoreJsEngine) engine.InnerEngine; //and remove this
 
-                    Html = await asChakra.EvaluateUtf16StringAsync(ExecuteEngineCode);
+                    Html = await asChakra.EvaluateUtf16StringAsync(ExecuteEngineCode.Memory);
                 }
             }
             catch (JsRuntimeException ex)
@@ -144,7 +145,7 @@ namespace ZeroReact
         {
             if (ServerOnly)
             {
-                writer.Write(Html.ReadOnlyMemory.Span);
+                writer.Write(Html.Memory.Span);
                 return;
             }
 
@@ -164,7 +165,7 @@ namespace ZeroReact
 
             if (!ClientOnly)
             {
-                writer.Write(Html.ReadOnlyMemory.Span);
+                writer.Write(Html.Memory.Span);
             }
 
             writer.Write("</");
@@ -198,9 +199,9 @@ namespace ZeroReact
             writer.Write("\"))");
         }
 
-        protected PooledCharBuffer ExecuteEngineCode { get; set; }
+        protected IMemoryOwner<char> ExecuteEngineCode { get; set; }
 
-        protected PooledCharBuffer Html { get; set; }
+        protected IMemoryOwner<char> Html { get; set; }
 
         /// <summary>
         /// Slice of ExecuteEngineCode

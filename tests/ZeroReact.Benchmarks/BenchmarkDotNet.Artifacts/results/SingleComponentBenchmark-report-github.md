@@ -10,5 +10,5 @@ Job=InProcess  Toolchain=InProcessToolchain
 ```
 |                      Method |     Mean |     Error |    StdDev |    Gen 0 |    Gen 1 |    Gen 2 |  Allocated |
 |---------------------------- |---------:|----------:|----------:|---------:|---------:|---------:|-----------:|
-| Environment_CreateComponent | 40.32 ms | 0.7962 ms | 0.9478 ms | 312.5000 | 250.0000 | 250.0000 | 1314.33 KB |
-|   ZeroReact_CreateComponent | 37.39 ms | 0.6337 ms | 0.5927 ms |        - |        - |        - |    2.09 KB |
+| Environment_CreateComponent | 39.88 ms | 0.8574 ms | 1.2020 ms | 312.5000 | 250.0000 | 250.0000 | 1314.33 KB |
+|   ZeroReact_CreateComponent | 38.38 ms | 0.6641 ms | 0.6212 ms |        - |        - |        - |     2.1 KB |

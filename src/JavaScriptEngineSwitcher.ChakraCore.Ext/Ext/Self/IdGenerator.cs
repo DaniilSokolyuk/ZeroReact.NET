@@ -5,7 +5,7 @@ using JavaScriptEngineSwitcher.ChakraCore.JsRt;
 
 namespace JavaScriptEngineSwitcher.ChakraCore.Ext.Self
 {
-    public class IdGenerator
+    public sealed class IdGenerator
     {
         private static readonly string _encode32Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 
@@ -15,7 +15,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.Ext.Self
 
         private const int reactIdLength = 20;
 
-        public PooledCharBuffer Generate()
+        public IMemoryOwner<char> Generate()
         {
             
             var chars = ArrayPool<char>.Shared.Rent(reactIdLength);
