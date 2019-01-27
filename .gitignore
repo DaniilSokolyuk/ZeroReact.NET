@@ -265,3 +265,4 @@ __pycache__/
 **/Resources/*.generated.js
 **/Resources/*.generated.min.js
 
+tests/ZeroReact.Benchmarks/BenchmarkDotNet.Artifacts/

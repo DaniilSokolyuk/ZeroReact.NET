@@ -30,9 +30,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                         _jsSourceContext++,
                         uniqueDocumentName.Memory.Span);
 
-                    var processedValue = resultValue.ConvertToString();
-
-                    return processedValue.JsCopyStringUtf16();
+                    return resultValue.JsCopyStringUtf16();
                 }
                 catch (JsException e)
                 {
