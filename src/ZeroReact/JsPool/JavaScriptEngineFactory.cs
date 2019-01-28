@@ -155,20 +155,19 @@ namespace ZeroReact.JsPool
 	                    engine.Execute(_fileSystem.ReadAsString(file), file);
 	                }
 	            }
-	            catch (JsScriptException ex)
+	            catch (JsException ex)
 	            {
-	                // We can't simply rethrow the exception here, as it's possible this is running
-	                // on a background thread (ie. as a response to a file changing). If we did
-	                // throw the exception here, it would terminate the entire process. Instead,
-	                // save the exception, and then just rethrow it later when getting the engine.
-	                _scriptLoadException = new ReactException(
-	                    $"Error while loading \"{file}\": {ex.Message}\r\nLine: {ex.LineNumber}\r\nColumn: {ex.ColumnNumber}");
-	            }
+	                _scriptLoadException = new ReactException(string.Format(
+	                    "Error while loading \"{0}\": {1}",
+	                    file,
+	                    ex.Message
+	                ), ex);
+                }
 	            catch (IOException ex)
 	            {
-	                _scriptLoadException = new ReactException(ex.Message);
+	                _scriptLoadException = new ReactException(ex.Message, ex);
 	            }
-	        }
+            }
 	    }
 
         /// <summary>

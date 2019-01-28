@@ -8,5 +8,10 @@ namespace ZeroReact.Utils
         {
             
         }
+
+        public ReactException(string message, Exception innerException) : base(message, innerException)
+        {
+
+        }
     }
 }
