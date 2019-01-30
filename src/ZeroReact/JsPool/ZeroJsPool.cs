@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using JavaScriptEngineSwitcher.Core;
+using JavaScriptEngineSwitcher.Core.Utilities;
 
 namespace ZeroReact.JsPool
 {
@@ -34,44 +35,61 @@ namespace ZeroReact.JsPool
             _sourcePoolReference = new WeakReference<ZeroJsPool>(pool);
         }
 
-        private IJsEngine _engine { get; set; }
-
+        private IJsEngine _engine;
         public IJsEngine Engine => _engine;
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
-            if (_engine is null || _sourcePoolReference is null)
-            {
-                return;
-            }
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
 
-            if (_sourcePoolReference.TryGetTarget(out ZeroJsPool pool))
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                pool.Return(_engine);
+                if (_engine is null || _sourcePoolReference is null)
+                {
+                    return;
+                }
+
+                if (_sourcePoolReference.TryGetTarget(out ZeroJsPool pool))
+                {
+                    pool.Return(_engine);
+                }
+                else
+                {
+                    //looks like our pool is not exists more....
+                    _engine.Dispose();
+                }
+
+                _sourcePoolReference = null;
+                _engine = null;
             }
             else
             {
-                //looks like our pool is not exists more....
                 _engine.Dispose();
             }
+        }
 
-            _sourcePoolReference = null;
-            _engine = null;
+        ~JsEngineOwner()
+        {
+            Dispose(false);
         }
     }
 
     public sealed class ZeroJsPool : IDisposable
     {
-        protected readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-
         private readonly ZeroJsPoolConfig _config;
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+
         private readonly AutoResetEvent _engineMaintenance = new AutoResetEvent(false);
         private readonly ConcurrentQueue<IJsEngine> _enginesToMaintenance = new ConcurrentQueue<IJsEngine>();
 
         private readonly ConcurrentDictionary<IJsEngine, int> _engines = new ConcurrentDictionary<IJsEngine, int>();
 
         private readonly ConcurrentQueue<IJsEngine> _availableEngines = new ConcurrentQueue<IJsEngine>();
-        private readonly SemaphoreSlim _lock = new SemaphoreSlim(0);
+        private readonly SemaphoreSlim _availableEnginesLock = new SemaphoreSlim(0);
 
         public ZeroJsPool(ZeroJsPoolConfig config)
         {
@@ -135,7 +153,7 @@ namespace ZeroReact.JsPool
 
         public ValueTask<JsEngineOwner> TakeAsync(CancellationToken cancellationToken = default)
         {
-            var task = _lock.WaitAsync(cancellationToken);
+            var task = _availableEnginesLock.WaitAsync(cancellationToken);
             return task.IsCompleted
                 ? new ValueTask<JsEngineOwner>(TakeEngineFunc())
                 : new ValueTask<JsEngineOwner>(TakeEngineFuncAwaited(task));
@@ -161,7 +179,7 @@ namespace ZeroReact.JsPool
 
         #endregion
 
-        private  IJsEngine CreateEngine()
+        private IJsEngine CreateEngine()
         {
             var engine = _config.EngineFactory();
             _engines.TryAdd(engine, 0);
@@ -185,7 +203,7 @@ namespace ZeroReact.JsPool
         private void AddToAvailiableEngines(IJsEngine engine)
         {
             _availableEngines.Enqueue(engine);
-            _lock.Release();
+            _availableEnginesLock.Release();
         }
 
         private void MaintenanceEngine(IJsEngine engine)
@@ -201,17 +219,23 @@ namespace ZeroReact.JsPool
             _engineMaintenance.Set();
         }
 
+        private InterlockedStatedFlag disposed;
         public void Dispose()
         {
-            _engineMaintenance?.Dispose();
-            _lock?.Dispose();
-
-            while (_availableEngines.TryDequeue(out var engine) | _enginesToMaintenance.TryDequeue(out var engine2))
+            if (disposed.Set())
             {
-                DisposeEngine(engine ?? engine2);
-            }
+                _cancellationTokenSource.Cancel();
+                _engineMaintenance?.Dispose();
+                _availableEnginesLock?.Dispose();
 
-            _engines.Clear();
+                while (_availableEngines.TryDequeue(out var engine) | _enginesToMaintenance.TryDequeue(out var engine2))
+                {
+                    DisposeEngine(engine ?? engine2);
+                }
+
+                _engines.Clear();
+                _cancellationTokenSource.Dispose();
+            }
         }
     }
 }

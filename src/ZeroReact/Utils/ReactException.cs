@@ -2,16 +2,15 @@
 
 namespace ZeroReact.Utils
 {
-    public class ReactException : Exception
+    public class ZeroReactException : Exception
     {
-        public ReactException(string message) : base(message)
+        public ZeroReactException(string message) : base(message)
         {
-            
+
         }
 
-        public ReactException(string message, Exception innerException) : base(message, innerException)
+        public ZeroReactException(string message, Exception innerException) : base(message, innerException)
         {
-
         }
     }
 }

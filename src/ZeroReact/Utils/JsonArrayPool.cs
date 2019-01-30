@@ -8,26 +8,26 @@ namespace ZeroReact.Utils
     {
         public static JsonArrayPool<T> Instance = new JsonArrayPool<T>();
 
-		private readonly ArrayPool<T> _inner;
+        private readonly ArrayPool<T> _inner;
 
-		public JsonArrayPool()
-		{
-			_inner = ArrayPool<T>.Shared;
-		}
+        public JsonArrayPool()
+        {
+            _inner = ArrayPool<T>.Shared;
+        }
 
-		public T[] Rent(int minimumLength)
-		{
-			return _inner.Rent(minimumLength);
-		}
+        public T[] Rent(int minimumLength)
+        {
+            return _inner.Rent(minimumLength);
+        }
 
-		public void Return(T[] array)
-		{
-			if (array == null)
-			{
-				throw new ArgumentNullException(nameof(array));
-			}
+        public void Return(T[] array)
+        {
+            if (array == null)
+            {
+                throw new ArgumentNullException(nameof(array));
+            }
 
-			_inner.Return(array);
-		}
+            _inner.Return(array);
+        }
     }
 }
