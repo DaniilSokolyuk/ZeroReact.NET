@@ -13,13 +13,14 @@ namespace ZeroReact
 
             services.AddSingleton(config);
 
-            services.AddScoped<IReactIdGenerator, ReactIdGenerator>();
-
+            services.AddSingleton<IReactIdGenerator, ReactIdGenerator>();
             services.AddSingleton<ICache, NullCache>();
             services.AddSingleton<IFileSystem, PhysicalFileSystem>();
 
-            services.AddScoped<IReactScopedContext, ReactScopedContext>();
             services.AddSingleton<IJavaScriptEngineFactory, JavaScriptEngineFactory>();
+            services.AddScoped<IReactScopedContext, ReactScopedContext>();
+
+            services.AddTransient<ReactComponent>();
 
             return services;
         }

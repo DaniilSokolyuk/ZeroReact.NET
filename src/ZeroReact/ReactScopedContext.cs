@@ -14,7 +14,7 @@ namespace ZeroReact
 
     public class ReactScopedContext : IDisposable, IReactScopedContext
     {
-        protected readonly IList<ReactComponent> _components = new List<ReactComponent>();
+        protected readonly List<ReactComponent> _components = new List<ReactComponent>();
 
         private readonly IServiceProvider _serviceProvider;
 
@@ -25,7 +25,7 @@ namespace ZeroReact
 
         public virtual ReactComponent CreateComponent<T>(string componentName) where T: ReactComponent
         {
-            var component = ActivatorUtilities.CreateInstance<T>(_serviceProvider);
+            var component = _serviceProvider.GetRequiredService<T>();
 
             component.ComponentName = componentName;
 

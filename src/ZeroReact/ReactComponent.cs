@@ -3,11 +3,9 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using JavaScriptEngineSwitcher.ChakraCore;
-using JavaScriptEngineSwitcher.ChakraCore.JsRt;
 using JavaScriptEngineSwitcher.Core;
 using Newtonsoft.Json;
 using ZeroReact.JsPool;
@@ -24,7 +22,9 @@ namespace ZeroReact
         private readonly IReactIdGenerator _reactIdGenerator;
         private readonly IJavaScriptEngineFactory _javaScriptEngineFactory;
 
-        public ReactComponent(ReactConfiguration configuration, IReactIdGenerator reactIdGenerator,
+        public ReactComponent(
+            ReactConfiguration configuration, 
+            IReactIdGenerator reactIdGenerator,
             IJavaScriptEngineFactory javaScriptEngineFactory)
         {
             _configuration = configuration;
