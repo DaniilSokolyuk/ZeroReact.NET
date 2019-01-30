@@ -12,7 +12,24 @@ namespace ZeroReact.Benchmarks
 	{
 		private readonly NoTextWriter tk = new NoTextWriter();
 
-	    [Benchmark]
+        [Benchmark]
+        public async Task ZeroReact_CreateComponent()
+        {
+            using (var scope = sp.CreateScope())
+            {
+                var reactContext = scope.ServiceProvider.GetRequiredService<IReactScopedContext>();
+
+                var component = reactContext.CreateComponent<ReactComponent>("HelloWorld");
+                component.Props = _testData;
+                component.ServerOnly = true;
+
+                await component.RenderHtml();
+
+                component.WriteRenderedHtmlTo(tk);
+            }
+        }
+
+        [Benchmark]
 	    public void Environment_CreateComponent()
 	    {
 		    var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();
@@ -21,22 +38,5 @@ namespace ZeroReact.Benchmarks
 		    component.RenderHtml(tk, renderServerOnly: true);
 		    environment.ReturnEngineToPool();
         }
-
-        [Benchmark]
-		public async Task ZeroReact_CreateComponent()
-		{
-			using (var scope = sp.CreateScope())
-			{
-				var reactContext = scope.ServiceProvider.GetRequiredService<IReactScopedContext>();
-
-				var component = reactContext.CreateComponent<ReactComponent>("HelloWorld");
-				component.Props = _testData;
-				component.ServerOnly = true;
-
-				await component.RenderHtml();
-
-				component.WriteRenderedHtmlTo(tk);
-			}
-		}
     }
 }

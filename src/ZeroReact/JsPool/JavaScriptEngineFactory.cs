@@ -2,9 +2,10 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using JavaScriptEngineSwitcher.ChakraCore;
 using JavaScriptEngineSwitcher.Core;
-using JSPool;
 using ZeroReact.Utils;
 
 namespace ZeroReact.JsPool
@@ -15,7 +16,7 @@ namespace ZeroReact.JsPool
         /// Gets a JavaScript engine from the pool.
         /// </summary>
         /// <returns>The JavaScript engine</returns>
-        PooledJsEngine GetEngine();
+        ValueTask<JsEngineOwner> TakeEngineAsync(CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -39,7 +40,7 @@ namespace ZeroReact.JsPool
 		/// <summary>
 		/// Pool of JavaScript engines to use
 		/// </summary>
-		private IJsPool _pool;
+		private ZeroJsPool _pool;
 		/// <summary>
 		/// Whether this class has been disposed.
 		/// </summary>
@@ -67,34 +68,30 @@ namespace ZeroReact.JsPool
 		/// <summary>
 		/// Creates a new JavaScript engine pool.
 		/// </summary>
-		private IJsPool CreatePool()
+		private ZeroJsPool CreatePool()
 		{
 			var allFiles = _config.ScriptFilesWithoutTransform.Select(_fileSystem.MapPath);
 
-		    var poolConfig = new JsPoolConfig
-		    {
-		        EngineFactory = () => new ChakraCoreJsEngine(_config.EngineSettings),
-		        Initializer = InitialiseEngine,
-		        WatchPath = _fileSystem.MapPath("~/"),
-		        WatchFiles = allFiles,
+		    var poolConfig = new ZeroJsPoolConfig
+            {
+		        EngineFactory = EngineFactory,
 		        StartEngines = _config.StartEngines,
 		        MaxEngines = _config.MaxEngines,
                 MaxUsagesPerEngine = _config.MaxUsagesPerEngine
 		    };
 
-		    var pool = new CustomJsPool(poolConfig);
-			// Reset the recycle exception on recycle. If there *are* errors loading the scripts
-			// during recycle, the errors will be caught in the initializer.
-			pool.Recycled += (sender, args) => _scriptLoadException = null;
+		    var pool = new ZeroJsPool(poolConfig);
 			return pool;
 		}
 
 		/// <summary>
 		/// Loads standard React and Babel scripts into the engine.
 		/// </summary>
-		private void InitialiseEngine(IJsEngine engine)
+		private IJsEngine EngineFactory()
 		{
-			var thisAssembly = typeof(ReactConfiguration).GetTypeInfo().Assembly;
+            var engine = new ChakraCoreJsEngine(_config.EngineSettings);
+
+            var thisAssembly = typeof(ReactConfiguration).GetTypeInfo().Assembly;
 			LoadResource(engine, "ZeroReact.Resources.shims.js", thisAssembly);
 
 			if (_config.LoadReact)
@@ -115,7 +112,9 @@ namespace ZeroReact.JsPool
 				// were loaded above, let's ensure that's the case.
 				EnsureReactLoaded(engine);
 			}
-		}
+
+            return engine;
+        }
 
 		/// <summary>
 		/// Loads code from embedded JavaScript resource into the engine.
@@ -194,13 +193,9 @@ namespace ZeroReact.JsPool
 		/// Gets a JavaScript engine from the pool.
 		/// </summary>
 		/// <returns>The JavaScript engine</returns>
-		public PooledJsEngine GetEngine()
-		{
-			EnsureValidState();
-			return _pool.GetEngine();
-		}
+		public ValueTask<JsEngineOwner> TakeEngineAsync(CancellationToken cancellationToken = default) => _pool.TakeAsync(cancellationToken);
 
-		/// <summary>
+        /// <summary>
 		/// Clean up all engines
 		/// </summary>
 		public void Dispose()

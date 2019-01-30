@@ -128,11 +128,9 @@ namespace ZeroReact
 
             try
             {
-                using (var engine = _javaScriptEngineFactory.GetEngine()) //TODO: make it async
+                using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
                 {
-                    var asChakra = (ChakraCoreJsEngine) engine.InnerEngine; //and remove this
-
-                    Html = await asChakra.EvaluateUtf16StringAsync(ExecuteEngineCode.Memory);
+                    Html = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(ExecuteEngineCode.Memory);
                 }
             }
             catch (JsRuntimeException ex)
