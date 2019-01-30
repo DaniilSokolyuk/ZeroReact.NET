@@ -9,6 +9,14 @@ namespace ZeroReact.JsPool
 {
     public class ZeroJsPoolConfig
     {
+        public ZeroJsPoolConfig()
+        {
+            StartEngines = 10;
+            MaxEngines = 25;
+            MaxUsagesPerEngine = 100;
+            GarbageCollectionInterval = 20;
+        }
+
         public Func<IJsEngine> EngineFactory { get; set; }
         public int StartEngines { get; set; }
         public int MaxEngines { get; set; }
@@ -76,7 +84,7 @@ namespace ZeroReact.JsPool
                     {
                         if (_enginesToMaintenance.IsEmpty && _engines.Count >= _config.StartEngines)
                         {
-                            _engineMaintenance.WaitOne(10000);
+                            _engineMaintenance.WaitOne(1000);
                         }
 
                         //pupulater

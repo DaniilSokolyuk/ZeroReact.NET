@@ -45,8 +45,8 @@ namespace ZeroReact.Benchmarks
 				{
 					config.AddScriptWithoutTransform("Sample.js");
 					config.StartEngines = 2;
-					config.MaxEngines = 2;
-					config.MaxUsagesPerEngine = 0;
+					config.MaxEngines = 4;
+					config.MaxUsagesPerEngine = 4;
 					config.AllowJavaScriptPrecompilation = false;
 				});
 
@@ -69,8 +69,8 @@ namespace ZeroReact.Benchmarks
 				.SetAllowJavaScriptPrecompilation(false);
 			configuration
 				.SetStartEngines(2)
-				.SetMaxEngines(2)
-				.SetMaxUsagesPerEngine(0)
+				.SetMaxEngines(4)
+				.SetMaxUsagesPerEngine(4)
 				.SetLoadBabel(false)
 				.AddScriptWithoutTransform("Sample.js");
 		}

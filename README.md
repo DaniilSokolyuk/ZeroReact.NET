@@ -13,7 +13,7 @@ Frequency=3515626 Hz, Resolution=284.4444 ns, Timer=TSC
 Job=InProcess  Toolchain=InProcessToolchain  
 
 ```
-|                      Method |      Mean |     Error |    StdDev |     Gen 0 |     Gen 1 |    Gen 2 |  Allocated |
-|---------------------------- |----------:|----------:|----------:|----------:|----------:|---------:|-----------:|
-|       React_CreateComponent | 110.48 ms | 2.1075 ms | 2.2550 ms | 1312.5000 | 1187.5000 | 937.5000 | 6567.07 KB |
-|   ZeroReact_CreateComponent |  50.62 ms | 0.9509 ms | 0.9765 ms |         - |         - |        - |   19.03 KB |
+|                      Method |     Mean |     Error |    StdDev |    Gen 0 |    Gen 1 |    Gen 2 |  Allocated |
+|---------------------------- |---------:|----------:|----------:|---------:|---------:|---------:|-----------:|
+|  ReactJSNet_CreateComponent | 40.53 ms | 0.5189 ms | 0.4854 ms | 312.5000 | 187.5000 | 187.5000 | 1452.47 KB |
+|   ZeroReact_CreateComponent | 22.30 ms | 0.3976 ms | 0.4083 ms |        - |        - |        - |    1.78 KB |
