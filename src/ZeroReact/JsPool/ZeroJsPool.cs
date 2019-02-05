@@ -81,8 +81,6 @@ namespace ZeroReact.JsPool
     public sealed class ZeroJsPool : IDisposable
     {
         private readonly ZeroJsPoolConfig _config;
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-
         private readonly AutoResetEvent _engineMaintenance = new AutoResetEvent(false);
         private readonly ConcurrentQueue<IJsEngine> _enginesToMaintenance = new ConcurrentQueue<IJsEngine>();
 
@@ -98,7 +96,7 @@ namespace ZeroReact.JsPool
             new Thread(
                 () =>
                 {
-                    while (!_cancellationTokenSource.IsCancellationRequested)
+                    while (!disposed.IsSet())
                     {
                         if (_enginesToMaintenance.IsEmpty && _engines.Count >= _config.StartEngines)
                         {
@@ -106,14 +104,14 @@ namespace ZeroReact.JsPool
                         }
 
                         //pupulater
-                        while (!_cancellationTokenSource.IsCancellationRequested && _engines.Count < _config.StartEngines)
+                        while (!disposed.IsSet() && _engines.Count < _config.StartEngines)
                         {
                             var engine = CreateEngine();
                             AddToAvailiableEngines(engine);
                         }
 
                         //MaxUsagesPerEngine
-                        if (!_cancellationTokenSource.IsCancellationRequested && _config.MaxUsagesPerEngine > 0 && _engines.Count < _config.MaxEngines)
+                        if (!disposed.IsSet() && _config.MaxUsagesPerEngine > 0 && _engines.Count < _config.MaxEngines)
                         {
                             var currentUsages = _engines.Values.Sum();
                             var maxUsages = _engines.Count * _config.MaxUsagesPerEngine;
@@ -127,7 +125,7 @@ namespace ZeroReact.JsPool
                             }
                         }
 
-                        if (!_cancellationTokenSource.IsCancellationRequested && _enginesToMaintenance.TryDequeue(out var maintenangeEngine))
+                        if (!disposed.IsSet() && _enginesToMaintenance.TryDequeue(out var maintenangeEngine))
                         {
                             if (!_engines.TryGetValue(maintenangeEngine, out var usageCount) ||
                                 (_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine)) //MaxUsagesPerEngine disposer
@@ -240,15 +238,12 @@ namespace ZeroReact.JsPool
         {
             if (disposed.Set())
             {
-                _cancellationTokenSource.Cancel();
-             
                 while (_availableEngines.TryDequeue(out var engine) | _enginesToMaintenance.TryDequeue(out var engine2))
                 {
                     DisposeEngine(engine ?? engine2);
                 }
 
                 _engines.Clear();
-                _cancellationTokenSource.Dispose();
                 _engineMaintenance?.Dispose();
                 _availableEnginesLock?.Dispose();
             }
