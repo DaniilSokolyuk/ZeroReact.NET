@@ -106,14 +106,14 @@ namespace ZeroReact.JsPool
                         }
 
                         //pupulater
-                        while (_engines.Count < _config.StartEngines)
+                        while (!_cancellationTokenSource.IsCancellationRequested && _engines.Count < _config.StartEngines)
                         {
                             var engine = CreateEngine();
                             AddToAvailiableEngines(engine);
                         }
 
                         //MaxUsagesPerEngine
-                        if (_config.MaxUsagesPerEngine > 0 && _engines.Count < _config.MaxEngines)
+                        if (!_cancellationTokenSource.IsCancellationRequested && _config.MaxUsagesPerEngine > 0 && _engines.Count < _config.MaxEngines)
                         {
                             var currentUsages = _engines.Values.Sum();
                             var maxUsages = _engines.Count * _config.MaxUsagesPerEngine;
@@ -202,12 +202,24 @@ namespace ZeroReact.JsPool
 
         private void AddToAvailiableEngines(IJsEngine engine)
         {
+            if (disposed.IsSet()) //test
+            {
+                DisposeEngine(engine);
+                return;
+            }
+            
             _availableEngines.Enqueue(engine);
             _availableEnginesLock.Release();
         }
 
         private void MaintenanceEngine(IJsEngine engine)
         {
+            if (disposed.IsSet()) //test
+            {
+                DisposeEngine(engine);
+                return;
+            }
+            
             _enginesToMaintenance.Enqueue(engine);
             _engineMaintenance.Set();
         }
@@ -216,7 +228,11 @@ namespace ZeroReact.JsPool
         {
             engine?.Dispose();
             _engines.TryRemove(engine, out _);
-            _engineMaintenance.Set();
+
+            if (!disposed.IsSet())
+            {
+                _engineMaintenance.Set();
+            }
         }
 
         private InterlockedStatedFlag disposed;
@@ -225,9 +241,7 @@ namespace ZeroReact.JsPool
             if (disposed.Set())
             {
                 _cancellationTokenSource.Cancel();
-                _engineMaintenance?.Dispose();
-                _availableEnginesLock?.Dispose();
-
+             
                 while (_availableEngines.TryDequeue(out var engine) | _enginesToMaintenance.TryDequeue(out var engine2))
                 {
                     DisposeEngine(engine ?? engine2);
@@ -235,6 +249,8 @@ namespace ZeroReact.JsPool
 
                 _engines.Clear();
                 _cancellationTokenSource.Dispose();
+                _engineMaintenance?.Dispose();
+                _availableEnginesLock?.Dispose();
             }
         }
     }

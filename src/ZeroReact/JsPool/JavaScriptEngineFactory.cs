@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -47,6 +48,9 @@ namespace ZeroReact.JsPool
         /// User script load exception
         /// </summary>
 		private Exception _scriptLoadException;
+        
+        private FileSystemWatcher _fileSystemWatcher;
+        private HashSet<string> _watchedFiles;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JavaScriptEngineFactory"/> class.
@@ -61,6 +65,34 @@ namespace ZeroReact.JsPool
             _cache = cache;
             _fileSystem = fileSystem;
             _pool = CreatePool();
+            
+            _fileSystemWatcher = BeginFileWatcher();
+            _watchedFiles = _config.ScriptFilesWithoutTransform.Select(_fileSystem.MapPath).ToHashSet();
+        }
+        
+        private FileSystemWatcher BeginFileWatcher()
+        {
+            var watcher = new FileSystemWatcher(_fileSystem.MapPath("~/"))
+            {
+                IncludeSubdirectories = true,
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName
+            };
+            watcher.Changed += OnFileChanged;
+            watcher.Created += OnFileChanged;
+            watcher.Deleted += OnFileChanged;
+            watcher.Renamed += OnFileChanged;
+            watcher.EnableRaisingEvents = true;
+            return watcher;
+        }
+
+        private void OnFileChanged(object source, FileSystemEventArgs e)
+        {
+            if (_watchedFiles.Contains(e.FullPath))
+            {
+                var oldPool = _pool;
+                _pool = CreatePool();
+                oldPool.Dispose();
+            }
         }
 
         /// <summary>
@@ -68,8 +100,6 @@ namespace ZeroReact.JsPool
         /// </summary>
         private ZeroJsPool CreatePool()
         {
-            var allFiles = _config.ScriptFilesWithoutTransform.Select(_fileSystem.MapPath);
-
             var poolConfig = new ZeroJsPoolConfig
             {
                 EngineFactory = EngineFactory,
@@ -176,6 +206,7 @@ namespace ZeroReact.JsPool
         }
 
         private InterlockedStatedFlag disposed;
+
         public void Dispose()
         {
             if (disposed.Set())
