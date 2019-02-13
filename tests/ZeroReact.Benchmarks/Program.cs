@@ -8,16 +8,16 @@ namespace ZeroReact.Benchmarks
 	{
 		public static async Task Main(string[] args)
 		{
-            //var tt = new ComponentRenderWithoutBabelBenchmarks();
-            //tt.Setup();
+            var tt = new SingleComponentBenchmark();
+            tt.Setup();
 
-            //for (int i = 0; i < 10000000; i++)
-            //{
-            //    await tt.Environment_CreateComponent();
-            //}
+            for (int i = 0; i < 10000000; i++)
+            {
+                await tt.ZeroReact_CreateComponent();
+            }
 
-           // BenchmarkRunner.Run<WebSimulateBenchmark>();
-			BenchmarkRunner.Run<SingleComponentBenchmark>();
+            // BenchmarkRunner.Run<WebSimulateBenchmark>();
+            //BenchmarkRunner.Run<SingleComponentBenchmark>();
             Console.ReadKey();
 		}
 	}
