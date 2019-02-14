@@ -39,7 +39,7 @@ namespace ZeroReact.Components
 
                 pooledTextWriter.Write(')');
 
-                var executeEngineCode = pooledTextWriter.GetMemoryOwner(true);
+                var executeEngineCode = pooledTextWriter.GetMemoryOwner();
                 try
                 {
                     using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())

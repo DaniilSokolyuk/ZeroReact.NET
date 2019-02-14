@@ -17,9 +17,11 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 
         public void Dispose()
         {
-            if (_length > 0)
+            var array = _array;
+            if (array != null && _length > 0)
             {
-                ArrayPool<char>.Shared.Return(_array);
+                _array = null;
+                ArrayPool<char>.Shared.Return(array);
             }
         }
 
