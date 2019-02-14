@@ -61,16 +61,9 @@ namespace ZeroReact.Utils
                 var page = GetCurrentPage();
                 var copyLength = Math.Min(count, page.Length - _charIndex);
 
-                var copyLengthInBytes = Unsafe.SizeOf<char>() * copyLength;
-
-                unsafe
-                {
-                    fixed (char* src = &Unsafe.AsRef(buffer[index]))
-                    fixed (char* dst = &Unsafe.AsRef(page[_charIndex]))
-                    {
-                        Buffer.MemoryCopy(src, dst, copyLengthInBytes, copyLengthInBytes);
-                    }
-                }
+                buffer
+                    .Slice(index, copyLength)
+                    .CopyTo(new Span<char>(page, _charIndex, copyLength));
 
                 _charIndex += copyLength;
                 index += copyLength;
