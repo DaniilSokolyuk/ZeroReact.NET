@@ -2,19 +2,20 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
+using ZeroReact.Components;
 
 namespace ZeroReact
 {
     public interface IReactScopedContext
     {
-        ReactComponent CreateComponent<T>(string componentName) where T: ReactComponent;
+        T CreateComponent<T>(string componentName) where T: ReactBaseComponent;
 
         void GetInitJavaScript(TextWriter writer);
     }
 
     public class ReactScopedContext : IDisposable, IReactScopedContext
     {
-        protected readonly List<ReactComponent> _components = new List<ReactComponent>();
+        protected readonly List<ReactBaseComponent> _components = new List<ReactBaseComponent>();
 
         private readonly IServiceProvider _serviceProvider;
 
@@ -23,7 +24,7 @@ namespace ZeroReact
             _serviceProvider = serviceProvider;
         }
 
-        public virtual ReactComponent CreateComponent<T>(string componentName) where T: ReactComponent
+        public virtual T CreateComponent<T>(string componentName) where T: ReactBaseComponent
         {
             var component = _serviceProvider.GetRequiredService<T>();
 

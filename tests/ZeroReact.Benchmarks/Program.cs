@@ -8,7 +8,7 @@ namespace ZeroReact.Benchmarks
 	{
 		public static async Task Main(string[] args)
 		{
-            var tt = new SingleComponentBenchmark();
+            var tt = new WebSimulateBenchmark();
             tt.Setup();
 
             for (int i = 0; i < 10000000; i++)
@@ -16,8 +16,9 @@ namespace ZeroReact.Benchmarks
                 await tt.ZeroReact_CreateComponent();
             }
 
-            // BenchmarkRunner.Run<WebSimulateBenchmark>();
-            //BenchmarkRunner.Run<SingleComponentBenchmark>();
+
+            BenchmarkRunner.Run<WebSimulateBenchmark>();
+           // BenchmarkRunner.Run<SingleComponentBenchmark>();
             Console.ReadKey();
 		}
 	}

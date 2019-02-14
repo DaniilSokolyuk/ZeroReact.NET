@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using React;
+using ReactComponent = ZeroReact.Components.ReactComponent;
 
 namespace ZeroReact.Benchmarks
 {
@@ -25,11 +26,11 @@ namespace ZeroReact.Benchmarks
 
                 await component.RenderHtml();
 
-                component.WriteRenderedHtmlTo(tk);
+                component.WriteOutputHtmlTo(tk);
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
 	    public void Environment_CreateComponent()
 	    {
 		    var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using ZeroReact.Components;
 
 namespace ZeroReact.AspNetCore
 {
@@ -61,7 +62,7 @@ namespace ZeroReact.AspNetCore
 
             await reactComponent.RenderHtml();
 
-            return new ActionHtmlString(writer => reactComponent.WriteRenderedHtmlTo(writer));
+            return new ActionHtmlString(writer => reactComponent.WriteOutputHtmlTo(writer));
         }
 
         /// <summary>
@@ -114,7 +115,7 @@ namespace ZeroReact.AspNetCore
 
             return new ActionHtmlString(writer =>
             {
-                reactComponent.WriteRenderedHtmlTo(writer);
+                reactComponent.WriteOutputHtmlTo(writer);
                 WriteScriptTag(writer, bodyWriter => reactComponent.RenderJavaScript(bodyWriter), config.ScriptNonceProvider);
             });
         }

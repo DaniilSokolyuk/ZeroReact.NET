@@ -12,23 +12,23 @@ namespace ZeroReact.Benchmarks
 	{
 		private readonly NoTextWriter tk = new NoTextWriter();
 
-	    [Benchmark]
-	    public async Task Environment_CreateComponent()
-	    {
+	    //[Benchmark]
+	    //public async Task Environment_CreateComponent()
+	    //{
 
-	        var tasks = Enumerable.Range(0, 5).Select(
-	            async x =>
-	            {
-	                var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();
-	                var component = environment.CreateComponent("HelloWorld", _testData, serverOnly: true);
+	    //    var tasks = Enumerable.Range(0, 5).Select(
+	    //        async x =>
+	    //        {
+	    //            var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();
+	    //            var component = environment.CreateComponent("HelloWorld", _testData, serverOnly: true);
 
-	                component.RenderHtml(tk, renderServerOnly: true);
-	                environment.ReturnEngineToPool();
-	                await Task.Delay(0);
-	            });
+	    //            component.RenderHtml(tk, renderServerOnly: true);
+	    //            environment.ReturnEngineToPool();
+	    //            await Task.Delay(0);
+	    //        });
 
-	        await Task.WhenAll(tasks);
-        }
+	    //    await Task.WhenAll(tasks);
+     //   }
 
         [Benchmark]
 		public async Task ZeroReact_CreateComponent()
@@ -40,7 +40,7 @@ namespace ZeroReact.Benchmarks
 		            {
 		                var reactContext = scope.ServiceProvider.GetRequiredService<IReactScopedContext>();
 
-		                var component = reactContext.CreateComponent<ReactComponent>("HelloWorld");
+		                var component = reactContext.CreateComponent<ZeroReact.Components.ReactComponent>("HelloWorld");
 		                component.Props = _testData;
 		                component.ServerOnly = true;
 

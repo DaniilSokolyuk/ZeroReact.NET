@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
+using ZeroReact.Components;
 using ZeroReact.JsPool;
 
 namespace ZeroReact
@@ -13,6 +14,7 @@ namespace ZeroReact
 
             services.AddSingleton(config);
 
+            services.AddSingleton<IComponentNameInvalidator, ComponentNameInvalidator>();
             services.AddSingleton<IReactIdGenerator, ReactIdGenerator>();
             services.AddSingleton<ICache, NullCache>();
             services.AddSingleton<IFileSystem, PhysicalFileSystem>();
