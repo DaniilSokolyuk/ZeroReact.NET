@@ -7,7 +7,7 @@ using JavaScriptEngineSwitcher.ChakraCore.JsRt;
 
 namespace ZeroReact.Utils
 {
-    public class ArrayPooledTextWriter : TextWriter
+    public sealed class ArrayPooledTextWriter : TextWriter
     {
         private static readonly ArrayPool<char> _pagePool = ArrayPool<char>.Shared;
         private static readonly ArrayPool<char[]> _rootPool = ArrayPool<char[]>.Shared;
@@ -30,7 +30,7 @@ namespace ZeroReact.Utils
 
         public int Length { get; private set; }
 
-        public override Encoding Encoding { get; } 
+        public override Encoding Encoding { get; }
 
         public override void Write(char value)
         {
@@ -40,71 +40,37 @@ namespace ZeroReact.Utils
             Length++;
         }
 
-        public override void Write(char[] buffer)
-        {
-            if (buffer == null)
-            {
-                return;
-            }
+        public override void Write(char[] buffer) => Write(new ReadOnlySpan<char>(buffer));
 
-            Write(buffer, 0, buffer.Length);
-        }
+        public override void Write(string value) => Write(value.AsSpan());
 
-        public override void Write(string value)
-        {
-            if (value == null)
-            {
-                return;
-            }
+        public override void Write(char[] buffer, int index, int count) => Write(new ReadOnlySpan<char>(buffer, index, count));
 
-            var index = 0;
-            var count = value.Length;
-
-            while (count > 0)
-            {
-                var page = GetCurrentPage();
-                var copyLength = Math.Min(count, page.Length - _charIndex);
-
-                value.CopyTo(
-                    index,
-                    page,
-                    _charIndex,
-                    copyLength);
-
-                _charIndex += copyLength;
-                index += copyLength;
-
-                count -= copyLength;
-            }
-
-            Length += value.Length;
-        }
-
-        public override void Write(char[] buffer, int index, int count)
+        public override void Write(ReadOnlySpan<char> buffer)
         {
             if (buffer == null)
             {
                 throw new ArgumentNullException(nameof(buffer));
             }
 
+            var index = 0;
+            var count = buffer.Length;
+
             while (count > 0)
             {
                 var page = GetCurrentPage();
                 var copyLength = Math.Min(count, page.Length - _charIndex);
 
-                Array.Copy(
-                    buffer,
-                    index,
-                    page,
-                    _charIndex,
-                    copyLength);
+                buffer
+                    .Slice(index, copyLength)
+                    .CopyTo(new Span<char>(page, _charIndex, copyLength));
 
                 _charIndex += copyLength;
                 index += copyLength;
                 count -= copyLength;
             }
 
-            Length += count;
+            Length += buffer.Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -205,3 +171,4 @@ namespace ZeroReact.Utils
         }
     }
 }
+

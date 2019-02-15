@@ -215,6 +215,9 @@ namespace ZeroReact.JsPool
                 {
                     _pool.Dispose();
                     _pool = null;
+
+                    _fileSystemWatcher.Dispose();
+                    _fileSystemWatcher = null;
                 }
             }
         }

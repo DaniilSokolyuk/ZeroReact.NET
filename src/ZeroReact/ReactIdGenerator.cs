@@ -22,7 +22,7 @@ namespace ZeroReact
     /// <summary>
 	/// React ID generator.
 	/// </summary>
-	public class ReactIdGenerator : IReactIdGenerator
+	public sealed class ReactIdGenerator : IReactIdGenerator
     {
 		private static readonly string _encode32Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 

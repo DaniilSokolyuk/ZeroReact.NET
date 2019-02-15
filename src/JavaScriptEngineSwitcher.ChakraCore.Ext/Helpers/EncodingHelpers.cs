@@ -9,61 +9,92 @@ using PolyfillsForOldDotNet.System.Buffers;
 
 namespace JavaScriptEngineSwitcher.ChakraCore.Helpers
 {
-	/// <summary>
-	/// Encoding helpers
-	/// </summary>
-	internal static class EncodingHelpers
-	{
-		public static string UnicodeToAnsi(string value, out int byteCount)
-		{
-			if (string.IsNullOrEmpty(value))
-			{
-				byteCount = 0;
-				return value;
-			}
+    /// <summary>
+    /// Encoding helpers
+    /// </summary>
+    internal static class EncodingHelpers
+    {
+        public static string UnicodeToAnsi(string value, out int byteCount)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                byteCount = 0;
+                return value;
+            }
 
-			string result;
-			int valueLength = value.Length;
-			Encoding utf8Encoding = Encoding.UTF8;
+            string result;
+            int valueLength = value.Length;
+            Encoding utf8Encoding = Encoding.UTF8;
+#if NETFULL
+            Encoding ansiEncoding = Encoding.Default;
+#else
 			Encoding ansiEncoding = Encoding.GetEncoding(0);
+#endif
 
-			var byteArrayPool = ArrayPool<byte>.Shared;
-			int bufferLength = utf8Encoding.GetByteCount(value);
-			byte[] buffer = byteArrayPool.Rent(bufferLength + 1);
-			buffer[bufferLength] = 0;
+            var byteArrayPool = ArrayPool<byte>.Shared;
+            int bufferLength = utf8Encoding.GetByteCount(value);
+            byte[] buffer = byteArrayPool.Rent(bufferLength + 1);
+            buffer[bufferLength] = 0;
 
-			try
-			{
-#if NET471 || NETSTANDARD || NETCOREAPP2_1
-				result = ConvertStringInternal(utf8Encoding, ansiEncoding, value, valueLength, buffer, bufferLength);
+            try
+            {
+#if NET45 || NET471 || NETSTANDARD || NETCOREAPP2_1
+                result = ConvertStringInternal(utf8Encoding, ansiEncoding, value, valueLength, buffer, bufferLength);
 #else
 				utf8Encoding.GetBytes(value, 0, valueLength, buffer, 0);
 				result = ansiEncoding.GetString(buffer, 0, bufferLength);
 #endif
+            }
+            finally
+            {
+                byteArrayPool.Return(buffer);
+            }
+
+            byteCount = bufferLength;
+
+            return result;
+        }
+#if NET45 || NET471 || NETSTANDARD || NETCOREAPP2_1
+
+        private static unsafe string ConvertStringInternal(Encoding srcEncoding, Encoding dstEncoding, string s,
+            int charCount, byte[] bytes, int byteCount)
+        {
+            fixed (char* pString = s)
+            fixed (byte* pBytes = bytes)
+            {
+                srcEncoding.GetBytes(pString, charCount, pBytes, byteCount);
+#if NET471 || NETSTANDARD || NETCOREAPP2_1
+                string result = dstEncoding.GetString(pBytes, byteCount);
+
+                return result;
+            }
+#else
+			}
+
+			int resultLength = dstEncoding.GetCharCount(bytes, 0, byteCount);
+			var charArrayPool = ArrayPool<char>.Shared;
+			char[] resultChars = charArrayPool.Rent(resultLength + 1);
+			resultChars[resultLength] = '\0';
+
+			string result;
+
+			try
+			{
+				fixed (byte* pBytes = bytes)
+				fixed (char* pResultChars = resultChars)
+				{
+					dstEncoding.GetChars(pBytes, byteCount, pResultChars, resultLength);
+					result = new string(pResultChars, 0, resultLength);
+				}
 			}
 			finally
 			{
-				byteArrayPool.Return(buffer);
+				charArrayPool.Return(resultChars);
 			}
-
-			byteCount = bufferLength;
 
 			return result;
-		}
-#if NET471 || NETSTANDARD || NETCOREAPP2_1
-
-		private static unsafe string ConvertStringInternal(Encoding srcEncoding, Encoding dstEncoding, string s,
-			int charCount, byte[] bytes, int byteCount)
-		{
-			fixed (char* pString = s)
-			fixed (byte* pBytes = bytes)
-			{
-				srcEncoding.GetBytes(pString, charCount, pBytes, byteCount);
-				string result = dstEncoding.GetString(pBytes, byteCount);
-
-				return result;
-			}
-		}
 #endif
-	}
+        }
+#endif
+    }
 }
