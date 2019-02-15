@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ZeroReact.Sample.Webpack.AspNetCore.Controllers
 {
-    [Route("")]
     public class HomeController : Controller
     {
         public IActionResult Index()

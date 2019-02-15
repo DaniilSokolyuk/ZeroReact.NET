@@ -57,7 +57,10 @@ namespace ZeroReact.Sample.Webpack.AspNetCore
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
-            app.UseMvc();
+            app.UseMvc(routes =>
+            {
+                routes.MapRoute("default", "{path?}", new { controller = "Home", action = "Index" });
+            });
         }
     }
 }

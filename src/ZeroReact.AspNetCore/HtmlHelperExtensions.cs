@@ -32,7 +32,7 @@ namespace ZeroReact.AspNetCore
 
             var scopedContext = htmlHelper.ViewContext.HttpContext.RequestServices.GetRequiredService<IReactScopedContext>();
 
-            var reactComponent = scopedContext.CreateComponent<ReactRouter>(componentName: componentName);
+            var reactComponent = scopedContext.CreateComponent<ReactRouterComponent>(componentName: componentName);
 
             reactComponent.Props = props;
             reactComponent.ContainerId = containerId;

@@ -1,3 +1,6 @@
 ﻿@model dynamic
 
 @await Html.ReactAsync("Components.HelloWorld", new { name = "World" })
+
+
+@await Html.ReactRouterAsync("Components.RootComponent", new { })

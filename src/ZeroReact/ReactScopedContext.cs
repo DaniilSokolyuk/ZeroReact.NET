@@ -13,9 +13,9 @@ namespace ZeroReact
         void GetInitJavaScript(TextWriter writer);
     }
 
-    public class ReactScopedContext : IDisposable, IReactScopedContext
+    public sealed class ReactScopedContext : IReactScopedContext
     {
-        protected readonly List<ReactBaseComponent> _components = new List<ReactBaseComponent>();
+        private readonly List<ReactBaseComponent> _components = new List<ReactBaseComponent>();
 
         private readonly IServiceProvider _serviceProvider;
 
@@ -24,7 +24,7 @@ namespace ZeroReact
             _serviceProvider = serviceProvider;
         }
 
-        public virtual T CreateComponent<T>(string componentName) where T: ReactBaseComponent
+        public T CreateComponent<T>(string componentName) where T: ReactBaseComponent
         {
             var component = _serviceProvider.GetRequiredService<T>();
 
@@ -35,7 +35,7 @@ namespace ZeroReact
             return component;
         }
 
-        public virtual void GetInitJavaScript(TextWriter writer)
+        public void GetInitJavaScript(TextWriter writer)
         {
             foreach (var component in _components)
             {
@@ -44,14 +44,6 @@ namespace ZeroReact
                     component.RenderJavaScript(writer);
                     writer.Write(';');
                 }
-            }
-        }
-
-        public void Dispose()
-        {
-            foreach (var component in _components)
-            {
-                component.Dispose();
             }
         }
     }

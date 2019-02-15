@@ -20,9 +20,11 @@ namespace ZeroReact
             services.AddSingleton<IFileSystem, PhysicalFileSystem>();
 
             services.AddSingleton<IJavaScriptEngineFactory, JavaScriptEngineFactory>();
+
             services.AddScoped<IReactScopedContext, ReactScopedContext>();
 
             services.AddTransient<ReactComponent>();
+            services.AddTransient<ReactRouterComponent>();
 
             return services;
         }

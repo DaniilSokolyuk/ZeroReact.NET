@@ -10,11 +10,11 @@ using ZeroReact.Utils;
 
 namespace ZeroReact.Components
 {
-    public sealed class ReactRouter : ReactBaseComponent
+    public sealed class ReactRouterComponent : ReactBaseComponent
     {
         public string Path { get; set; }
 
-        public ReactRouter(
+        public ReactRouterComponent(
             ReactConfiguration configuration,
             IReactIdGenerator reactIdGenerator,
             IJavaScriptEngineFactory javaScriptEngineFactory,
