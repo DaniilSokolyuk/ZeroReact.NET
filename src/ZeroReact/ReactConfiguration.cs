@@ -21,7 +21,6 @@ namespace ZeroReact
             return this;
         }
 
-
         internal JsonSerializer Serializer = JsonSerializer.Create(
             new JsonSerializerSettings
             {
@@ -34,26 +33,34 @@ namespace ZeroReact
             return this;
         }
 
-
+        /// <summary>
+        /// ChakraCore engine settings
+        /// </summary>
         public ChakraCoreSettings EngineSettings { get; set; } = new ChakraCoreSettings();
 
         /// <summary>
         /// Gets or sets the number of engines to initially start when a pool is created. 
-        /// Defaults to <c>10</c>.
+        /// Defaults to <c>Math.Min(Environment.ProcessorCount, 8)</c>.
         /// </summary>
-        public int StartEngines { get; set; } = 10;
+        public int StartEngines { get; set; } = Math.Min(Environment.ProcessorCount, 8);
 
         /// <summary>
         /// Gets or sets the number of max engines. 
-        /// Defaults to <c>10</c>.
+        /// Defaults to <c>Math.Max(Environment.ProcessorCount * 2, 16)</c>.
         /// </summary>
-        public int MaxEngines { get; set; } = 20;
+        public int MaxEngines { get; set; } = Math.Max(Environment.ProcessorCount * 2, 16);
 
         /// <summary>
         /// Gets or sets the maximum number of times an engine can be reused before it is disposed.
         /// <c>0</c> is unlimited. Defaults to <c>100</c>.
         /// </summary>
         public int MaxUsagesPerEngine { get; set; } = 100;
+
+        /// <summary>
+        /// Gets or sets the number of times an engine can be reused before its garbage collector
+        /// is ran. <c>0</c> is unlimited. Defaults to <c>0</c>
+        /// </summary>
+        public int GarbageCollectionInterval { get; set; }
 
         /// <summary>
         /// Gets or sets whether the built-in version of React is loaded. If <c>false</c>, you must
@@ -76,7 +83,7 @@ namespace ZeroReact
         /// Handle an exception caught during server-render of a component.
         /// If unset, unhandled exceptions will be thrown for all component renders.
         /// </summary>
-        public Action<Exception, string, string> ExceptionHandler { get; set; } = (Exception ex, string ComponentName, string ContainerId) =>
+        public Action<Exception, string, string> ExceptionHandler { get; set; } = (ex, ComponentName, ContainerId) =>
             throw new Exception(string.Format(
                 "Error while rendering \"{0}\" to \"{2}\": {1}",
                 ComponentName,
@@ -90,6 +97,10 @@ namespace ZeroReact
         /// </summary>
         public Func<string> ScriptNonceProvider { get; set; }
 
+        /// <summary>
+        /// Gets or sets whether to allow the JavaScript pre-compilation (accelerates the
+        /// initialization of JavaScript engines).
+        /// </summary>
         public bool AllowJavaScriptPrecompilation { get; set; }
     }
 }

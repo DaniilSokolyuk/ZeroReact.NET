@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
-namespace ZeroReact
+namespace ZeroReact.Utils
 {
     [DebuggerStepThrough]
     internal static class ThrowHelper

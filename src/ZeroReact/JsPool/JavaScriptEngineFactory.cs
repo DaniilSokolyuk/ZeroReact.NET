@@ -105,7 +105,8 @@ namespace ZeroReact.JsPool
                 EngineFactory = EngineFactory,
                 StartEngines = _config.StartEngines,
                 MaxEngines = _config.MaxEngines,
-                MaxUsagesPerEngine = _config.MaxUsagesPerEngine
+                MaxUsagesPerEngine = _config.MaxUsagesPerEngine,
+                GarbageCollectionInterval = _config.GarbageCollectionInterval
             };
 
             var pool = new ZeroJsPool(poolConfig);
