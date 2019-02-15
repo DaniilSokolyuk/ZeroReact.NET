@@ -1,6 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.Buffers;
+using System.IO;
 using System.Threading.Tasks;
+using JavaScriptEngineSwitcher.ChakraCore;
+using JavaScriptEngineSwitcher.Core;
+using Newtonsoft.Json;
 using ZeroReact.JsPool;
+using ZeroReact.Utils;
 
 namespace ZeroReact.Components
 {
@@ -8,46 +14,60 @@ namespace ZeroReact.Components
     {
         public string Path { get; set; }
 
-        public ReactRouter(ReactConfiguration configuration, IReactIdGenerator reactIdGenerator, IJavaScriptEngineFactory javaScriptEngineFactory, IComponentNameInvalidator componentNameInvalidator) : base(configuration, reactIdGenerator, javaScriptEngineFactory, componentNameInvalidator)
+        public ReactRouter(
+            ReactConfiguration configuration,
+            IReactIdGenerator reactIdGenerator,
+            IJavaScriptEngineFactory javaScriptEngineFactory,
+            IComponentNameInvalidator componentNameInvalidator) : base(
+            configuration,
+            reactIdGenerator,
+            javaScriptEngineFactory,
+            componentNameInvalidator)
         {
         }
 
-        //public async Task<RoutingContext> RenderRouterWithContext()
-        //{
-           
-        //}
-
-        private void WriteComponentInitialiser(TextWriter textWriter)
+        public async Task<RoutingContext> RenderRouterWithContext()
         {
-            textWriter.Write("React.createElement(");
-            textWriter.Write(ComponentName);
-            textWriter.Write(", Object.assign(");
-            WriterSerialziedProps(textWriter);
-            textWriter.Write(", { location: '");
-            textWriter.Write(Path);
-            textWriter.Write("', context: context }))");
+            if (ClientOnly)
+                return null;
+
+            using (var executeEngineCode = GetEngineCodeExecute())
+            using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
+            {
+                try
+                {
+                    OutputHtml = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
+
+                    using (var json = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(StringifyJson))
+                    {
+                        return JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span));
+                    }
+                }
+                catch (JsRuntimeException ex)
+                {
+                    ExceptionHandler(ex, ComponentName, ContainerId);
+                    return null;
+                }
+            }
         }
 
-        /// <summary>
-        /// Renders the JavaScript required to initialise this component client-side. This will
-        /// initialise the React component, which includes attach event handlers to the
-        /// server-rendered HTML.
-        /// </summary>
-        /// <param name="writer">The <see cref="T:System.IO.TextWriter" /> to which the content is written</param>
-        /// <returns>JavaScript</returns>
-        public override void RenderJavaScript(TextWriter writer)
+        private static readonly ReadOnlyMemory<char> StringifyJson = "JSON.stringify(context);".AsMemory();
+
+        private IMemoryOwner<char> GetEngineCodeExecute()
         {
-            writer.Write("ReactDOM.hydrate("); //?render?
+            using (var textWriter = new ArrayPooledTextWriter())
+            {
+                textWriter.Write("var context = {};");
+                textWriter.Write(ServerOnly ? "ReactDOMServer.renderToStaticMarkup(React.createElement(" : "ReactDOMServer.renderToString(React.createElement(");
+                textWriter.Write(ComponentName);
+                textWriter.Write(", Object.assign(");
+                WriterSerialziedProps(textWriter);
+                textWriter.Write(", { location: '");
+                textWriter.Write(Path);
+                textWriter.Write("', context: context })))");
 
-            writer.Write("React.createElement(");
-            writer.Write(ComponentName);
-            writer.Write(", ");
-            WriterSerialziedProps(writer);
-            writer.Write(')');
-
-            writer.Write(", document.getElementById(\"");
-            writer.Write(ContainerId);
-            writer.Write("\"))");
+                return textWriter.GetMemoryOwner();
+            }
         }
     }
 

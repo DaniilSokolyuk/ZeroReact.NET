@@ -40,7 +40,7 @@ namespace ZeroReact.Utils
             Length++;
         }
 
-        public override void Write(char[] buffer) => Write(buffer.AsSpan());
+        public override void Write(char[] buffer) => Write(new ReadOnlySpan<char>(buffer));
 
         public override void Write(string value) => Write(value.AsSpan());
 

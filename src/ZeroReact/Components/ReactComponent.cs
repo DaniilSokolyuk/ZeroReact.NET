@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.IO;
 using System.Threading.Tasks;
 using JavaScriptEngineSwitcher.ChakraCore;
@@ -29,23 +30,12 @@ namespace ZeroReact.Components
             if (ClientOnly)
                 return;
 
-            using (var pooledTextWriter = new ArrayPooledTextWriter())
+            using (var executeEngineCode = GetEngineCodeExecute())
+            using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
             {
-                pooledTextWriter.Write(ServerOnly
-                    ? "ReactDOMServer.renderToStaticMarkup("
-                    : "ReactDOMServer.renderToString(");
-
-                WriteComponentInitialiser(pooledTextWriter);
-
-                pooledTextWriter.Write(')');
-
-                var executeEngineCode = pooledTextWriter.GetMemoryOwner();
                 try
                 {
-                    using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
-                    {
-                        OutputHtml = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
-                    }
+                    OutputHtml = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
                 }
                 catch (JsRuntimeException ex)
                 {
@@ -58,29 +48,18 @@ namespace ZeroReact.Components
             }
         }
 
-        /// <summary>
-        /// Renders the JavaScript required to initialise this component client-side. This will
-        /// initialise the React component, which includes attach event handlers to the
-        /// server-rendered HTML.
-        /// </summary>
-        /// <param name="writer">The <see cref="T:System.IO.TextWriter" /> to which the content is written</param>
-        /// <returns>JavaScript</returns>
-        public override void RenderJavaScript(TextWriter writer)
+        private IMemoryOwner<char> GetEngineCodeExecute()
         {
-            writer.Write(ClientOnly ? "ReactDOM.render(" : "ReactDOM.hydrate(");
-            WriteComponentInitialiser(writer);
-            writer.Write(", document.getElementById(\"");
-            writer.Write(ContainerId);
-            writer.Write("\"))");
-        }
+            using (var writer = new ArrayPooledTextWriter())
+            {
+                writer.Write(ServerOnly ? "ReactDOMServer.renderToStaticMarkup(React.createElement(" : "ReactDOMServer.renderToString(React.createElement(");
+                writer.Write(ComponentName);
+                writer.Write(',');
+                WriterSerialziedProps(writer);
+                writer.Write("))");
 
-        private void WriteComponentInitialiser(TextWriter textWriter)
-        {
-            textWriter.Write("React.createElement(");
-            textWriter.Write(ComponentName);
-            textWriter.Write(',');
-            WriterSerialziedProps(textWriter);
-            textWriter.Write(')');
+                return writer.GetMemoryOwner();
+            }
         }
     }
 }

@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using ZeroReact.JsPool;
 using ZeroReact.Utils;
@@ -149,7 +145,23 @@ namespace ZeroReact.Components
             writer.Write('>');
         }
 
-        public abstract void RenderJavaScript(TextWriter writer);
+        /// <summary>
+        /// Renders the JavaScript required to initialise this component client-side. This will
+        /// initialise the React component, which includes attach event handlers to the
+        /// server-rendered HTML.
+        /// </summary>
+        /// <param name="writer">The <see cref="T:System.IO.TextWriter" /> to which the content is written</param>
+        /// <returns>JavaScript</returns>
+        public void RenderJavaScript(TextWriter writer)
+        {
+            writer.Write(ClientOnly ? "ReactDOM.render(React.createElement(" : "ReactDOM.hydrate(React.createElement(");
+            writer.Write(ComponentName);
+            writer.Write(',');
+            WriterSerialziedProps(writer);
+            writer.Write("), document.getElementById(\"");
+            writer.Write(ContainerId);
+            writer.Write("\"))");
+        }
 
         public virtual void Dispose()
         {

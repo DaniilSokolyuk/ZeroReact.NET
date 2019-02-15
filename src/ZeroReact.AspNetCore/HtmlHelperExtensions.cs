@@ -2,10 +2,11 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using ZeroReact.Components;
+using ZeroReact.Utils;
 
 namespace ZeroReact.AspNetCore
 {
@@ -14,6 +15,81 @@ namespace ZeroReact.AspNetCore
     /// </summary>
     public static class HtmlHelperExtensions
     {
+        public static async Task<IHtmlContent> ReactRouterAsync<T>(
+            this IHtmlHelper htmlHelper,
+            string componentName,
+            T props,
+            string path = null,
+            string htmlTag = null,
+            string containerId = null,
+            bool clientOnly = false,
+            bool serverOnly = false,
+            string containerClass = null,
+            Action<HttpResponse, RoutingContext> contextHandler = null)
+        {
+            var response = htmlHelper.ViewContext.HttpContext.Response;
+            path = path ?? htmlHelper.ViewContext.HttpContext.Request.Path;
+
+            var scopedContext = htmlHelper.ViewContext.HttpContext.RequestServices.GetRequiredService<IReactScopedContext>();
+
+            var reactComponent = scopedContext.CreateComponent<ReactRouter>(componentName: componentName);
+
+            reactComponent.Props = props;
+            reactComponent.ContainerId = containerId;
+            reactComponent.ClientOnly = clientOnly;
+            reactComponent.ServerOnly = serverOnly;
+            reactComponent.ContainerClass = containerClass;
+
+            if (!string.IsNullOrEmpty(htmlTag))
+            {
+                reactComponent.ContainerTag = htmlTag;
+            }
+
+            reactComponent.Path = path;
+
+            var executionResult = await reactComponent.RenderRouterWithContext();
+
+            if (executionResult?.status != null || executionResult?.url != null)
+            {
+                // Use provided contextHandler
+                if (contextHandler != null)
+                {
+                    contextHandler(response, executionResult);
+                }
+                // Handle routing context internally
+                else
+                {
+                    var statusCode = executionResult.status ?? 302;
+
+                    // 300-399
+                    if (statusCode >= 300 && statusCode < 400)
+                    {
+                        if (!string.IsNullOrEmpty(executionResult.url))
+                        {
+                            if (statusCode == 301)
+                            {
+                                response.Redirect(executionResult.url, true);
+                            }
+                            else // 302 and all others
+                            {
+                                response.Redirect(executionResult.url);
+                            }
+                        }
+                        else
+                        {
+                            throw new ZeroReactException("Router requested redirect but no url provided.");
+                        }
+                    }
+                    else
+                    {
+                        response.StatusCode = statusCode;
+                    }
+                }
+            }
+
+            return new ActionHtmlString(writer => reactComponent.WriteOutputHtmlTo(writer));
+        }
+
         /// <summary>
         /// Renders the specified React component
         /// </summary>
