@@ -15,7 +15,7 @@ build_script:
 - ps: md -Name nupkg | .\build\Build.ps1
 test: off
 artifacts:
-- path: .\artifacts\**\*.nupkg
+- path: .\nupkg\**\*.nupkg
   name: NuGet
 deploy:
 - provider: NuGet
