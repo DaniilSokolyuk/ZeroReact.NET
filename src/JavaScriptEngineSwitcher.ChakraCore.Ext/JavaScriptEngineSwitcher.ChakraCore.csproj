@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../../build/common.props" />
     <PropertyGroup>
+        <Copyright>Andrey Taritsyn</Copyright>
         <Description>Modified version of JavaScriptEngineSwitcher.ChakraCore for ZeroReact library</Description>
         <TargetFrameworks>net471;netstandard2.0;netcoreapp2.1</TargetFrameworks>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
