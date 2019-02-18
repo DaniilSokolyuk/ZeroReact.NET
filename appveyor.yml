@@ -11,6 +11,7 @@ branches:
   - master
 nuget:
   disable_publish_on_pr: true
+build_script:
 - ps: >-    
     md -Name nupkg
 
@@ -18,7 +19,7 @@ nuget:
 
 test: off
 artifacts:
-- path: .\nupkg\**\*.nupkg
+- path: .\artifacts\**\*.nupkg
   name: NuGet
 deploy:
 - provider: NuGet
