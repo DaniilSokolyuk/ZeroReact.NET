@@ -1,0 +1,13 @@
+<Project>
+    <PropertyGroup>
+        <VersionPrefix>0.0.1-alpha</VersionPrefix>
+
+        <PackageProjectUrl>https://github.com/DaniilSokolyuk/SimpleRpc</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/DaniilSokolyuk/SimpleRpc</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    </PropertyGroup>
+</Project>

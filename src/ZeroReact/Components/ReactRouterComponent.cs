@@ -29,7 +29,9 @@ namespace ZeroReact.Components
         public async Task<RoutingContext> RenderRouterWithContext()
         {
             if (ClientOnly)
+            {
                 return null;
+            }
 
             using (var executeEngineCode = GetEngineCodeExecute())
             using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
@@ -40,7 +42,7 @@ namespace ZeroReact.Components
 
                     using (var json = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(StringifyJson))
                     {
-                        return JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span));
+                        return JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span)); //TODO: manually on spans, model is easy
                     }
                 }
                 catch (JsRuntimeException ex)
@@ -57,14 +59,14 @@ namespace ZeroReact.Components
         {
             using (var textWriter = new ArrayPooledTextWriter())
             {
-                textWriter.Write("var context = {};");
+                textWriter.Write("var context={};");
                 textWriter.Write(ServerOnly ? "ReactDOMServer.renderToStaticMarkup(React.createElement(" : "ReactDOMServer.renderToString(React.createElement(");
                 textWriter.Write(ComponentName);
-                textWriter.Write(", Object.assign(");
+                textWriter.Write(",Object.assign(");
                 WriterSerialziedProps(textWriter);
-                textWriter.Write(", { location: '");
+                textWriter.Write(",{location:'");
                 textWriter.Write(Path);
-                textWriter.Write("', context: context })))");
+                textWriter.Write("',context:context})))");
 
                 return textWriter.GetMemoryOwner();
             }

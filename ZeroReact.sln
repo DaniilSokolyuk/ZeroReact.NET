@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.106
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JavaScriptEngineSwitcher.ChakraCore.Ext", "src\JavaScriptEngineSwitcher.ChakraCore.Ext\JavaScriptEngineSwitcher.ChakraCore.Ext.csproj", "{D5CCE34B-5BF3-4514-ADC8-B4B18BFA6D11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JavaScriptEngineSwitcher.ChakraCore", "src\JavaScriptEngineSwitcher.ChakraCore.Ext\JavaScriptEngineSwitcher.ChakraCore.csproj", "{D5CCE34B-5BF3-4514-ADC8-B4B18BFA6D11}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZeroReact", "src\ZeroReact\ZeroReact.csproj", "{8F13F99D-8EC5-476B-84C4-2189148E4238}"
 EndProject
@@ -15,7 +15,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZeroReact.AspNetCore", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZeroReact.Sample.Webpack.AspNetCore", "src\ZeroReact.Sample.Webpack.AspNetCore\ZeroReact.Sample.Webpack.AspNetCore.csproj", "{BFF4E3CF-A477-4E8E-846F-D204345ED25F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroReact.Tests", "tests\ZeroReact.Tests\ZeroReact.Tests.csproj", "{B76F9E03-832D-4265-AA6D-3A0D4DFD8884}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZeroReact.Tests", "tests\ZeroReact.Tests\ZeroReact.Tests.csproj", "{B76F9E03-832D-4265-AA6D-3A0D4DFD8884}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{A0F1F7E7-2AD0-40EF-ABD4-B7DCE7254311}"
+	ProjectSection(SolutionItems) = preProject
+		build\common.props = build\common.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -48,29 +48,27 @@ namespace ZeroReact.Utils
 
         public override void Write(ReadOnlySpan<char> buffer)
         {
-            if (buffer == null)
+            if (buffer.Length > 0)
             {
-                throw new ArgumentNullException(nameof(buffer));
+                var index = 0;
+                var count = buffer.Length;
+
+                while (count > 0)
+                {
+                    var page = GetCurrentPage();
+                    var copyLength = Math.Min(count, page.Length - _charIndex);
+
+                    buffer
+                        .Slice(index, copyLength)
+                        .CopyTo(new Span<char>(page, _charIndex, copyLength));
+
+                    _charIndex += copyLength;
+                    index += copyLength;
+                    count -= copyLength;
+                }
+
+                Length += buffer.Length;
             }
-
-            var index = 0;
-            var count = buffer.Length;
-
-            while (count > 0)
-            {
-                var page = GetCurrentPage();
-                var copyLength = Math.Min(count, page.Length - _charIndex);
-
-                buffer
-                    .Slice(index, copyLength)
-                    .CopyTo(new Span<char>(page, _charIndex, copyLength));
-
-                _charIndex += copyLength;
-                index += copyLength;
-                count -= copyLength;
-            }
-
-            Length += buffer.Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

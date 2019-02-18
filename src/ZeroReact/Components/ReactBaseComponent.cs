@@ -158,7 +158,7 @@ namespace ZeroReact.Components
             writer.Write(ComponentName);
             writer.Write(',');
             WriterSerialziedProps(writer);
-            writer.Write("), document.getElementById(\"");
+            writer.Write("),document.getElementById(\"");
             writer.Write(ContainerId);
             writer.Write("\"))");
         }
