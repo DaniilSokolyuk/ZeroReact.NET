@@ -12,11 +12,7 @@ branches:
 nuget:
   disable_publish_on_pr: true
 build_script:
-- ps: >-    
-    md -Name nupkg
-
-    .\build\pack.ps1
-
+- ps: md -Name nupkg | .\build\Build.ps1
 test: off
 artifacts:
 - path: .\artifacts\**\*.nupkg

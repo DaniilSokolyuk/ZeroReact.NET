@@ -26,6 +26,6 @@
         <EmbeddedResource Include="Resources\shims.js;Resources\react.generated.js;Resources\react.generated.min.js" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\JavaScriptEngineSwitcher.ChakraCore.Ext\JavaScriptEngineSwitcher.ChakraCore.csproj" />
+      <ProjectReference Include="..\JavaScriptEngineSwitcher.ChakraCore\JavaScriptEngineSwitcher.ChakraCore.csproj" />
     </ItemGroup>
 </Project>

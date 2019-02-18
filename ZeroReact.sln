@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.106
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JavaScriptEngineSwitcher.ChakraCore", "src\JavaScriptEngineSwitcher.ChakraCore.Ext\JavaScriptEngineSwitcher.ChakraCore.csproj", "{D5CCE34B-5BF3-4514-ADC8-B4B18BFA6D11}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZeroReact", "src\ZeroReact\ZeroReact.csproj", "{8F13F99D-8EC5-476B-84C4-2189148E4238}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JavaScriptEngineSwitcher.Tests", "tests\JavaScriptEngineSwitcher.Tests\JavaScriptEngineSwitcher.Tests.csproj", "{9437564B-DEBA-4E40-8A8E-E68C3F12CFBD}"
@@ -22,16 +20,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{A0F1F7E7
 		build\common.props = build\common.props
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JavaScriptEngineSwitcher.ChakraCore", "src\JavaScriptEngineSwitcher.ChakraCore\JavaScriptEngineSwitcher.ChakraCore.csproj", "{452CD847-67B0-471C-AA76-93CAC4C05BA9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D5CCE34B-5BF3-4514-ADC8-B4B18BFA6D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D5CCE34B-5BF3-4514-ADC8-B4B18BFA6D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D5CCE34B-5BF3-4514-ADC8-B4B18BFA6D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D5CCE34B-5BF3-4514-ADC8-B4B18BFA6D11}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8F13F99D-8EC5-476B-84C4-2189148E4238}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8F13F99D-8EC5-476B-84C4-2189148E4238}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F13F99D-8EC5-476B-84C4-2189148E4238}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -56,6 +52,10 @@ Global
 		{B76F9E03-832D-4265-AA6D-3A0D4DFD8884}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B76F9E03-832D-4265-AA6D-3A0D4DFD8884}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B76F9E03-832D-4265-AA6D-3A0D4DFD8884}.Release|Any CPU.Build.0 = Release|Any CPU
+		{452CD847-67B0-471C-AA76-93CAC4C05BA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{452CD847-67B0-471C-AA76-93CAC4C05BA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{452CD847-67B0-471C-AA76-93CAC4C05BA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{452CD847-67B0-471C-AA76-93CAC4C05BA9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,4 @@
-Paths
+#Paths
 $packFolder = (Get-Item -Path "./nupkg" -Verbose).FullName
 $slnPath = (Get-Item -Path "./" -Verbose).FullName
 $srcPath = Join-Path $slnPath "src"

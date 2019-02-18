@@ -30,6 +30,6 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\JavaScriptEngineSwitcher.ChakraCore.Ext\JavaScriptEngineSwitcher.ChakraCore.csproj" />
+    <ProjectReference Include="..\..\src\JavaScriptEngineSwitcher.ChakraCore\JavaScriptEngineSwitcher.ChakraCore.csproj" />
   </ItemGroup>
 </Project>
