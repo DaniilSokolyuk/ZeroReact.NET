@@ -2,7 +2,7 @@ version: '{build}'
 image: Visual Studio 2017
 install:
 - set PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\;%PATH%
-- ps: Install-Product node 6
+#- ps: Install-Product node 6
 - npm install --global npm
 pull_requests:
   do_not_increment_build_number: true
@@ -13,7 +13,9 @@ nuget:
   disable_publish_on_pr: true
 build_script:
 - ps: md -Name nupkg
-- ps: Set-Location src\ZeroReact | npm install | npm run build 
+- ps: Set-Location src\ZeroReact
+- ps: npm install
+- ps: npm run build 
 - ps: Set-Location ..\..
 - ps: .\build\Build.ps1
 test: off
