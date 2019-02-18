@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{A0F1F7E7
 		build\common.props = build\common.props
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JavaScriptEngineSwitcher.ChakraCore", "src\JavaScriptEngineSwitcher.ChakraCore\JavaScriptEngineSwitcher.ChakraCore.csproj", "{452CD847-67B0-471C-AA76-93CAC4C05BA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JavaScriptEngineSwitcher.ChakraCore", "src\JavaScriptEngineSwitcher.ChakraCore\JavaScriptEngineSwitcher.ChakraCore.csproj", "{1CB6108B-2FF4-43AC-986F-FBB14A3EBA7D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,10 +52,10 @@ Global
 		{B76F9E03-832D-4265-AA6D-3A0D4DFD8884}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B76F9E03-832D-4265-AA6D-3A0D4DFD8884}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B76F9E03-832D-4265-AA6D-3A0D4DFD8884}.Release|Any CPU.Build.0 = Release|Any CPU
-		{452CD847-67B0-471C-AA76-93CAC4C05BA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{452CD847-67B0-471C-AA76-93CAC4C05BA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{452CD847-67B0-471C-AA76-93CAC4C05BA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{452CD847-67B0-471C-AA76-93CAC4C05BA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CB6108B-2FF4-43AC-986F-FBB14A3EBA7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CB6108B-2FF4-43AC-986F-FBB14A3EBA7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CB6108B-2FF4-43AC-986F-FBB14A3EBA7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CB6108B-2FF4-43AC-986F-FBB14A3EBA7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
