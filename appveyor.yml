@@ -12,7 +12,7 @@ branches:
 nuget:
   disable_publish_on_pr: true
 build_script:
-- ps: md -Name nupkg | .\build\Build.ps1
+- ps: md -Name nupkg | | Set-Location src\ZeroReact | npm install | npm run build | Set-Location ..\.. | .\build\Build.ps1
 test: off
 artifacts:
 - path: .\nupkg\**\*.nupkg
