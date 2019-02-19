@@ -3,7 +3,7 @@
     <PropertyGroup>
         <Copyright>Andrey Taritsyn</Copyright>
         <Description>Modified version of JavaScriptEngineSwitcher.ChakraCore for ZeroReact library</Description>
-        <TargetFrameworks>net471;netstandard2.0;netcoreapp2.1</TargetFrameworks>
+        <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <AssemblyName>ZeroReact.JavaScriptEngineSwitcher.ChakraCore</AssemblyName>
         <RootNamespace>JavaScriptEngineSwitcher.ChakraCore</RootNamespace>
