@@ -1,3 +1,9 @@
+md -Name nupkg
+Set-Location src\ZeroReact
+npm install --no-optional
+npm run build
+Set-Location ..\..
+
 #Paths
 $packFolder = (Get-Item -Path "./nupkg" -Verbose).FullName
 $slnPath = (Get-Item -Path "./" -Verbose).FullName
