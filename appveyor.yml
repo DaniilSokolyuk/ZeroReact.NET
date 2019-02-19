@@ -15,8 +15,8 @@ nuget:
 build_script:
 - ps: md -Name nupkg
 - ps: Set-Location src\ZeroReact
-- ps: npm install
-- ps: npm run build 
+- ps: npm install --no-optional
+- ps: npm run build
 - ps: Set-Location ..\..
 - ps: .\build\Build.ps1
 test: off
