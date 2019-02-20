@@ -165,8 +165,8 @@ namespace ZeroReact.Components
 
         public virtual void Dispose()
         {
-            OutputHtml.Dispose();
-            SerializedProps.Dispose();
+            OutputHtml?.Dispose();
+            SerializedProps?.Dispose();
         }
     }
 }

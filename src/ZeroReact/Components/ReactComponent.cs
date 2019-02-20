@@ -28,7 +28,9 @@ namespace ZeroReact.Components
         public async Task RenderHtml()
         {
             if (ClientOnly)
+            {
                 return;
+            }
 
             using (var executeEngineCode = GetEngineCodeExecute())
             using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
