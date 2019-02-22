@@ -33,24 +33,34 @@ namespace ZeroReact.Components
                 return null;
             }
 
-            using (var executeEngineCode = GetEngineCodeExecute())
-            using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
-            {
-                try
-                {
-                    OutputHtml = (IMemoryOwner<char>)await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
+            RoutingContext context = null;
 
-                    using (var json = (IMemoryOwner<char>)await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(StringifyJson))
+            using (var executeEngineCode = GetEngineCodeExecute())
+            {
+                await _javaScriptEngineFactory.ScheduleWork(
+                    engine =>
                     {
-                        return JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span)); //TODO: manually on spans, model is easy
-                    }
-                }
-                catch (JsRuntimeException ex)
-                {
-                    ExceptionHandler(ex, ComponentName, ContainerId);
-                    return null;
-                }
+                        try
+                        {
+                            OutputHtml = engine.Evaluate(executeEngineCode.Memory);
+
+                            using (var json = engine.Evaluate(StringifyJson))
+                            {
+                                context = JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span)); //TODO: manually on spans, model is easy
+                            }
+                        }
+                        catch (JsRuntimeException ex)
+                        {
+                            ExceptionHandler(ex, ComponentName, ContainerId);
+                        }
+                        finally
+                        {
+                            executeEngineCode.Dispose();
+                        }
+                    });
             }
+
+            return context;
         }
 
         private static readonly ReadOnlyMemory<char> StringifyJson = "JSON.stringify(context);".AsMemory();

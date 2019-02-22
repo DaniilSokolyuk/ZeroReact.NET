@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using JavaScriptEngineSwitcher.Core;
+using JavaScriptEngineSwitcher.ChakraCore;
 using JavaScriptEngineSwitcher.Core.Utilities;
 
 namespace ZeroReact.JsPool
@@ -12,12 +12,11 @@ namespace ZeroReact.JsPool
     {
         private readonly ZeroJsPoolConfig _config;
         private readonly AutoResetEvent _engineMaintenance = new AutoResetEvent(false);
-        private readonly ConcurrentQueue<IJsEngine> _enginesToMaintenance = new ConcurrentQueue<IJsEngine>();
+        private readonly ConcurrentQueue<ChakraCoreJsEngine> _enginesToMaintenance = new ConcurrentQueue<ChakraCoreJsEngine>();
 
-        private readonly ConcurrentDictionary<IJsEngine, int> _engines = new ConcurrentDictionary<IJsEngine, int>();
+        private readonly ConcurrentDictionary<ChakraCoreJsEngine, int> _engines = new ConcurrentDictionary<ChakraCoreJsEngine, int>();
 
-        private readonly ConcurrentQueue<IJsEngine> _availableEngines = new ConcurrentQueue<IJsEngine>();
-        private readonly SemaphoreSlim _availableEnginesLock = new SemaphoreSlim(0);
+        private readonly ConcurrentQueue<ChakraCoreJsEngine> _availableEngines = new ConcurrentQueue<ChakraCoreJsEngine>();
 
         public ZeroJsPool(ZeroJsPoolConfig config)
         {
@@ -77,58 +76,14 @@ namespace ZeroReact.JsPool
                 }).Start();
         }
 
-        #region Taking
-
-        public ValueTask<JsEngineOwner> TakeAsync(CancellationToken cancellationToken = default)
-        {
-            var task = _availableEnginesLock.WaitAsync(cancellationToken);
-            return task.IsCompleted
-                ? new ValueTask<JsEngineOwner>(TakeEngineFunc())
-                : new ValueTask<JsEngineOwner>(TakeEngineFuncAwaited(task));
-        }
-
-
-        private async Task<JsEngineOwner> TakeEngineFuncAwaited(Task task)
-        {
-            await task;
-            return TakeEngineFunc();
-        }
-
-        private JsEngineOwner TakeEngineFunc()
-        {
-            if (_availableEngines.TryDequeue(out var engine))
-            {
-                _engines[engine]++;
-                return new JsEngineOwner(this, engine);
-            }
-
-            throw new Exception("Not availiable engine");
-        }
-
-        #endregion
-
-        private IJsEngine CreateEngine()
+        private ChakraCoreJsEngine CreateEngine()
         {
             var engine = _config.EngineFactory();
             _engines.TryAdd(engine, 0);
             return engine;
         }
 
-        public void Return(IJsEngine engine)
-        {
-            if (!_engines.TryGetValue(engine, out var usageCount) ||
-                (_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine) ||
-                (_config.GarbageCollectionInterval > 0 && usageCount % _config.GarbageCollectionInterval == 0))
-            {
-                MaintenanceEngine(engine);
-            }
-            else
-            {
-                AddToAvailiableEngines(engine);
-            }
-        }
-
-        private void AddToAvailiableEngines(IJsEngine engine)
+        private void AddToAvailiableEngines(ChakraCoreJsEngine engine)
         {
             if (disposed.IsSet()) //test
             {
@@ -137,10 +92,9 @@ namespace ZeroReact.JsPool
             }
             
             _availableEngines.Enqueue(engine);
-            _availableEnginesLock.Release();
         }
 
-        private void MaintenanceEngine(IJsEngine engine)
+        private void MaintenanceEngine(ChakraCoreJsEngine engine)
         {
             if (disposed.IsSet()) //test
             {
@@ -152,7 +106,7 @@ namespace ZeroReact.JsPool
             _engineMaintenance.Set();
         }
 
-        public void DisposeEngine(IJsEngine engine)
+        public void DisposeEngine(ChakraCoreJsEngine engine)
         {
             engine?.Dispose();
             _engines.TryRemove(engine, out _);
@@ -175,7 +129,36 @@ namespace ZeroReact.JsPool
 
                 _engines.Clear();
                 _engineMaintenance?.Dispose();
-                _availableEnginesLock?.Dispose();
+            }
+        }
+
+        public void Return(ChakraCoreJsEngine engine)
+        {
+            if (!_engines.TryGetValue(engine, out var usageCount) ||
+                (_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine) ||
+                (_config.GarbageCollectionInterval > 0 && usageCount % _config.GarbageCollectionInterval == 0))
+            {
+                MaintenanceEngine(engine);
+            }
+            else
+            {
+                AddToAvailiableEngines(engine);
+            }
+        }
+
+        public Task ScheduleWork(Action<ChakraCoreJsEngine> work)
+        {
+            while (true)
+            {
+                if (_availableEngines.TryDequeue(out var engine))
+                {
+                    return engine.Schedule(jsEngine =>
+                    {
+                        _engines[engine]++;
+                        work(jsEngine);
+                        Return(jsEngine);
+                    });
+                }
             }
         }
     }

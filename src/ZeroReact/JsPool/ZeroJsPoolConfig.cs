@@ -1,4 +1,5 @@
 ﻿using System;
+using JavaScriptEngineSwitcher.ChakraCore;
 using JavaScriptEngineSwitcher.Core;
 
 namespace ZeroReact.JsPool
@@ -12,7 +13,7 @@ namespace ZeroReact.JsPool
             MaxUsagesPerEngine = 100;
         }
 
-        public Func<IJsEngine> EngineFactory { get; set; }
+        public Func<ChakraCoreJsEngine> EngineFactory { get; set; }
         public int StartEngines { get; set; }
         public int MaxEngines { get; set; }
         public int MaxUsagesPerEngine { get; set; }
