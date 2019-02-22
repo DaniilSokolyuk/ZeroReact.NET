@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Threading.Tasks;
 using JavaScriptEngineSwitcher.ChakraCore.Ext.Self;
 using JavaScriptEngineSwitcher.ChakraCore.JsRt;
 using JsException = JavaScriptEngineSwitcher.ChakraCore.JsRt.JsException;
@@ -10,19 +9,6 @@ namespace JavaScriptEngineSwitcher.ChakraCore
     public partial class ChakraCoreJsEngine
     {
         private readonly IdGenerator _idGenerator = new IdGenerator();
-
-        /// <summary>
-        /// Schedule item to work
-        /// </summary>
-        /// <param name="action"></param>
-        /// <returns></returns>
-        public Task Schedule(Action<ChakraCoreJsEngine> action) =>
-            _dispatcher.InvokeAsync(
-                () =>
-                {
-                    action(this);
-                    return null;
-                });
 
         public IMemoryOwner<char> Evaluate(ReadOnlyMemory<char> utf16Script)
         {
@@ -36,7 +22,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                         _jsSourceContext++,
                         uniqueDocumentName.Memory.Span);
 
-                    return resultValue.JsCopyStringUtf16();
+                    return resultValue.JsCopyStringUtf16Pooled();
                 }
                 catch (JsException e)
                 {

@@ -9,18 +9,24 @@ namespace JavaScriptEngineSwitcher.ChakraCore
     /// <summary>
     /// Provides services for managing the queue of script tasks on the thread with modified stack size
     /// </summary>
-    internal sealed class ScriptDispatcher : IDisposable
+    public sealed class ScriptDispatcher : IDisposable
     {
-        private readonly AutoResetEvent _enque = new AutoResetEvent(false);
+        private readonly AutoResetEvent _queueEnqeued = new AutoResetEvent(false);
         private readonly ConcurrentQueue<ScriptTask> _queue = new ConcurrentQueue<ScriptTask>();
+
+        private readonly ChakraCoreJsEngine _refToEngine;
+
+        public ConcurrentQueue<ActionTask> _sharedQueue { get; set; }
+        public AutoResetEvent _sharedQueueEnqeued { get; set; }
 
         /// <summary>
         /// Constructs an instance of script dispatcher
         /// </summary>
         /// <param name="maxStackSize">The maximum stack size, in bytes, to be used by the thread,
         /// or 0 to use the default maximum stack size specified in the header for the executable.</param>
-        public ScriptDispatcher(int maxStackSize)
+        public ScriptDispatcher(int maxStackSize, ChakraCoreJsEngine refToEngine)
         {
+            _refToEngine = refToEngine;
             var thread = new Thread(StartThread, maxStackSize)
             {
                 IsBackground = true,
@@ -46,13 +52,20 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         {
             while (!_disposed)
             {
-                _enque.WaitOne();
+                if (_sharedQueueEnqeued != null && _sharedQueue != null)
+                {
+                    WaitHandle.WaitAny(new[] { _queueEnqeued, _sharedQueueEnqeued }); //todo: optimize
+                }
+                else
+                {
+                    _queueEnqeued.WaitOne(1000);
+                }
 
                 while (_queue.TryDequeue(out var next))
                 {
                     if (_disposed)
                     {
-						break;
+                        break;
                     }
 
                     try
@@ -66,8 +79,32 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                         next.TaskCompletionSource.SetException(e);
                     }
                 }
+
+                if (_sharedQueueEnqeued != null && _sharedQueue != null)
+                {
+                    while (_sharedQueue.TryDequeue(out var next))
+                    {
+                        if (_disposed)
+                        {
+                            break;
+                        }
+
+                        try
+                        {
+                            next.Delegate(_refToEngine);
+                            next.TaskCompletionSource.SetResult(obj);
+                        }
+                        catch (Exception e)
+                        {
+                            next.TaskCompletionSource.SetException(e);
+                        }
+                    }
+                }
+
             }
         }
+
+        private static object obj = new object();
 
         /// <summary>
         /// Adds a script task to the end of the queue
@@ -76,7 +113,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         private void EnqueueTask(ScriptTask task)
         {
             _queue.Enqueue(task);
-            _enque.Set();
+            _queueEnqeued.Set();
         }
 
         /// <summary>
@@ -161,17 +198,15 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         {
             _disposed = true;
             _queue.Clear();
-            _enque.Dispose();
+            _queueEnqeued.Dispose();
         }
 
         #endregion
 
-        #region Internal types
-
         /// <summary>
         /// Represents a script task, that must be executed on separate thread
         /// </summary>
-        private readonly struct ScriptTask
+        public readonly struct ScriptTask
         {
             /// <summary>
             /// Gets a delegate to invocation
@@ -193,6 +228,26 @@ namespace JavaScriptEngineSwitcher.ChakraCore
             }
         }
 
-        #endregion
+        public readonly struct ActionTask
+        {
+            /// <summary>
+            /// Gets a delegate to invocation
+            /// </summary>
+            public readonly Action<ChakraCoreJsEngine> Delegate;
+
+
+            public readonly TaskCompletionSource<object> TaskCompletionSource;
+
+            /// <summary>
+            /// Constructs an instance of script task
+            /// </summary>
+            /// <param name="del">Delegate to invocation</param>
+            /// <param name="waitHandle">Event to signal when the invocation of delegate has completed</param>
+            public ActionTask(Action<ChakraCoreJsEngine> del)
+            {
+                Delegate = del;
+                TaskCompletionSource = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
+        }
     }
 }

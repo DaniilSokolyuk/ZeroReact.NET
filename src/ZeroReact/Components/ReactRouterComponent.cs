@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Buffers;
-using System.IO;
 using System.Threading.Tasks;
-using JavaScriptEngineSwitcher.ChakraCore;
 using JavaScriptEngineSwitcher.Core;
 using Newtonsoft.Json;
 using ZeroReact.JsPool;
@@ -12,8 +10,6 @@ namespace ZeroReact.Components
 {
     public sealed class ReactRouterComponent : ReactBaseComponent
     {
-        public string Path { get; set; }
-
         public ReactRouterComponent(
             ReactConfiguration configuration,
             IReactIdGenerator reactIdGenerator,
@@ -26,19 +22,21 @@ namespace ZeroReact.Components
         {
         }
 
-        public async Task<RoutingContext> RenderRouterWithContext()
+        public string Path { get; set; }
+
+        public RoutingContext RoutingContext { get; private set; }
+
+        public Task RenderRouterWithContext()
         {
             if (ClientOnly)
             {
-                return null;
+                return Task.CompletedTask;
             }
 
-            RoutingContext context = null;
-
-            using (var executeEngineCode = GetEngineCodeExecute())
-            {
-                await _javaScriptEngineFactory.ScheduleWork(
-                    engine =>
+            var work = _javaScriptEngineFactory.ScheduleWork(
+                engine =>
+                {
+                    using (var executeEngineCode = GetEngineCodeExecute())
                     {
                         try
                         {
@@ -46,21 +44,17 @@ namespace ZeroReact.Components
 
                             using (var json = engine.Evaluate(StringifyJson))
                             {
-                                context = JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span)); //TODO: manually on spans, model is easy
+                                RoutingContext = JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span)); //TODO: manually on spans, model is easy
                             }
                         }
                         catch (JsRuntimeException ex)
                         {
                             ExceptionHandler(ex, ComponentName, ContainerId);
                         }
-                        finally
-                        {
-                            executeEngineCode.Dispose();
-                        }
-                    });
-            }
+                    }
+                });
 
-            return context;
+            return work;
         }
 
         private static readonly ReadOnlyMemory<char> StringifyJson = "JSON.stringify(context);".AsMemory();

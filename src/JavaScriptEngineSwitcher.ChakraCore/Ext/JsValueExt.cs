@@ -8,7 +8,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
 {
     internal partial struct JsValue
     {
-        internal IMemoryOwner<char> JsCopyStringUtf16()
+        internal IMemoryOwner<char> JsCopyStringUtf16Pooled()
         {
             const int start = 0;
             int length = int.MaxValue;
