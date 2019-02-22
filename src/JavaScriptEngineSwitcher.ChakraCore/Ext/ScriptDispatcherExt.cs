@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -10,11 +11,9 @@ namespace JavaScriptEngineSwitcher.ChakraCore
     /// </summary>
     internal sealed class ScriptDispatcher : IDisposable
     {
-        /// <summary>
-        /// Queue of script tasks
-        /// </summary>
-        private readonly Queue<ScriptTask> _queue = new Queue<ScriptTask>();
-        
+        private readonly AutoResetEvent _enque = new AutoResetEvent(false);
+        private readonly ConcurrentQueue<ScriptTask> _queue = new ConcurrentQueue<ScriptTask>();
+
         /// <summary>
         /// Constructs an instance of script dispatcher
         /// </summary>
@@ -39,58 +38,33 @@ namespace JavaScriptEngineSwitcher.ChakraCore
             }
         }
 
-        private int _availableCount;
-        /// <summary>
-        /// The number of workers currently actively engaged in work
-        /// </summary>
-        public int AvailableCount => Thread.VolatileRead(ref _availableCount);
-
         /// <summary>
         /// Starts a thread with modified stack size.
         /// Loops forever, processing script tasks from the queue.
         /// </summary>
         private void StartThread()
         {
-            while (true)
+            while (!_disposed)
             {
-                ScriptTask next;
+                _enque.WaitOne();
 
-                lock (_queue)
+                while (_queue.TryDequeue(out var next))
                 {
-                    if (_queue.Count == 0)
+                    if (_disposed)
                     {
-                        do
-                        {
-                            if (_disposed)
-                                break;
-
-                            _availableCount++;
-                            Monitor.Wait(_queue);
-                            _availableCount--;
-
-                        } while (_queue.Count == 0);
+						break;
                     }
 
-                    if (_queue.Count == 0)
+                    try
                     {
-                        if (_disposed)
-                            break;
-                        else
-                            continue;
+                        var result = next.Delegate();
+
+                        next.TaskCompletionSource.SetResult(result);
                     }
-
-                    next = _queue.Dequeue();
-                }
-
-                try
-                {
-                    var result = next.Delegate();
-
-                    next.TaskCompletionSource.SetResult(result);
-                }
-                catch (Exception e)
-                {
-                    next.TaskCompletionSource.SetException(e);
+                    catch (Exception e)
+                    {
+                        next.TaskCompletionSource.SetException(e);
+                    }
                 }
             }
         }
@@ -101,14 +75,8 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         /// <param name="task">Script task</param>
         private void EnqueueTask(ScriptTask task)
         {
-            lock (_queue)
-            {
-                _queue.Enqueue(task);
-                if (_availableCount != 0)
-                {
-                    Monitor.Pulse(_queue); // wake up someone
-                }
-            }
+            _queue.Enqueue(task);
+            _enque.Set();
         }
 
         /// <summary>
@@ -148,7 +116,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
             return (T)InnnerInvokeAsync(() => func()).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
-        public async Task<T> InvokeAsync<T>(Func<T> func)
+        public Task<object> InvokeAsync(Func<object> func)
         {
             VerifyNotDisposed();
 
@@ -157,7 +125,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                 throw new ArgumentNullException(nameof(func));
             }
 
-            return (T)await InnnerInvokeAsync(() => func());
+            return InnnerInvokeAsync(func);
         }
 
         /// <summary>
@@ -192,10 +160,8 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         public void Dispose()
         {
             _disposed = true;
-            lock (_queue)
-            {
-                Monitor.PulseAll(_queue);
-            }
+            _queue.Clear();
+            _enque.Dispose();
         }
 
         #endregion

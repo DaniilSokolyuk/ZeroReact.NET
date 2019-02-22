@@ -16,9 +16,18 @@ namespace JavaScriptEngineSwitcher.ChakraCore
 
         public IMemoryOwner<char> EvaluateUtf16String(ReadOnlyMemory<char> utf16Script) => _dispatcher.Invoke(() => Evaluate(utf16Script.Span));
 
-        public Task<IMemoryOwner<char>> EvaluateUtf16StringAsync(ReadOnlyMemory<char> utf16Script) => _dispatcher.InvokeAsync(() => Evaluate(utf16Script.Span));
+        public Task<object> EvaluateUtf16StringAsync(ReadOnlyMemory<char> utf16Script) => _dispatcher.InvokeAsync(() => Evaluate(utf16Script.Span));
 
-        private IMemoryOwner<char> Evaluate(ReadOnlySpan<char> utf16Script)
+
+        public Task Schedule(Action<ChakraCoreJsEngine> action, ChakraCoreJsEngine state) =>
+            _dispatcher.InvokeAsync(
+                () =>
+                {
+                    action(state);
+                    return null;
+                });
+
+        public IMemoryOwner<char> Evaluate(ReadOnlySpan<char> utf16Script)
         {
             using (var uniqueDocumentName = _idGenerator.Generate())
             using (CreateJsScope())

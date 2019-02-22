@@ -38,9 +38,9 @@ namespace ZeroReact.Components
             {
                 try
                 {
-                    OutputHtml = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
+                    OutputHtml = (IMemoryOwner<char>)await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
 
-                    using (var json = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(StringifyJson))
+                    using (var json = (IMemoryOwner<char>)await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(StringifyJson))
                     {
                         return JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span)); //TODO: manually on spans, model is easy
                     }

@@ -32,12 +32,14 @@ namespace ZeroReact.Components
                 return;
             }
 
+            var task = _javaScriptEngineFactory.TakeEngineAsync();
+
             using (var executeEngineCode = GetEngineCodeExecute())
-            using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
+            using (var engineOwner = task.IsCompletedSuccessfully ? task.Result : await task)
             {
                 try
                 {
-                    OutputHtml = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
+                    OutputHtml = (IMemoryOwner<char>)await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
                 }
                 catch (JsRuntimeException ex)
                 {
