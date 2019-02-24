@@ -16,7 +16,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
 
         private readonly ChakraCoreJsEngine _refToEngine;
 
-        public ConcurrentQueue<ActionTask> _sharedQueue { get; set; }
+        public ConcurrentQueue<Action<ChakraCoreJsEngine>> _sharedQueue { get; set; }
         public AutoResetEvent _sharedQueueEnqeued { get; set; }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                 {
                     if (_disposed)
                     {
-                        break;
+                        return;
                     }
 
                     try
@@ -86,25 +86,15 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                     {
                         if (_disposed)
                         {
-                            break;
+                            return;
                         }
 
-                        try
-                        {
-                            next.Delegate(_refToEngine);
-                            next.TaskCompletionSource.SetResult(obj);
-                        }
-                        catch (Exception e)
-                        {
-                            next.TaskCompletionSource.SetException(e);
-                        }
+                        next(_refToEngine);
                     }
                 }
 
             }
         }
-
-        private static object obj = new object();
 
         /// <summary>
         /// Adds a script task to the end of the queue
@@ -198,6 +188,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         {
             _disposed = true;
             _queue.Clear();
+            _queueEnqeued.Set();
             _queueEnqeued.Dispose();
         }
 
@@ -222,28 +213,6 @@ namespace JavaScriptEngineSwitcher.ChakraCore
             /// <param name="del">Delegate to invocation</param>
             /// <param name="waitHandle">Event to signal when the invocation of delegate has completed</param>
             public ScriptTask(Func<object> del)
-            {
-                Delegate = del;
-                TaskCompletionSource = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
-            }
-        }
-
-        public readonly struct ActionTask
-        {
-            /// <summary>
-            /// Gets a delegate to invocation
-            /// </summary>
-            public readonly Action<ChakraCoreJsEngine> Delegate;
-
-
-            public readonly TaskCompletionSource<object> TaskCompletionSource;
-
-            /// <summary>
-            /// Constructs an instance of script task
-            /// </summary>
-            /// <param name="del">Delegate to invocation</param>
-            /// <param name="waitHandle">Event to signal when the invocation of delegate has completed</param>
-            public ActionTask(Action<ChakraCoreJsEngine> del)
             {
                 Delegate = del;
                 TaskCompletionSource = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);

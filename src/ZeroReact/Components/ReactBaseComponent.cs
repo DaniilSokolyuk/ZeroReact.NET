@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
+using JavaScriptEngineSwitcher.ChakraCore.JsRt;
 using Newtonsoft.Json;
 using ZeroReact.JsPool;
 using ZeroReact.Utils;

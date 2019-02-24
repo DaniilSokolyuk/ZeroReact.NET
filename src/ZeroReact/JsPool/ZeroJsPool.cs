@@ -11,9 +11,15 @@ namespace ZeroReact.JsPool
     public sealed class ZeroJsPool : IDisposable
     {
         private readonly ZeroJsPoolConfig _config;
-        private readonly AutoResetEvent _enginePopulater = new AutoResetEvent(false);
-
+        
         private readonly ConcurrentDictionary<ChakraCoreJsEngine, int> _engines = new ConcurrentDictionary<ChakraCoreJsEngine, int>();
+        private readonly AutoResetEvent _enginePopulater = new AutoResetEvent(false);
+        
+        private readonly AutoResetEvent _engineMaintenance = new AutoResetEvent(false);
+        private readonly ConcurrentQueue<ChakraCoreJsEngine> _enginesToMaintenance = new ConcurrentQueue<ChakraCoreJsEngine>();
+        
+        private readonly ConcurrentQueue<Action<ChakraCoreJsEngine>> _sharedQueue = new ConcurrentQueue<Action<ChakraCoreJsEngine>>();
+        private readonly AutoResetEvent _sharedQueueEnqeued = new AutoResetEvent(false);
 
         public ZeroJsPool(ZeroJsPoolConfig config)
         {
@@ -36,7 +42,8 @@ namespace ZeroReact.JsPool
                             }
 
                             //MaxUsagesPerEngine
-                            if (!disposed.IsSet() && _config.MaxUsagesPerEngine > 0 && _engines.Count < _config.MaxEngines)
+                            if (!disposed.IsSet() && _config.MaxUsagesPerEngine > 0 &&
+                                _engines.Count < _config.MaxEngines)
                             {
                                 var currentUsages = _engines.Values.Sum();
                                 var maxUsages = _engines.Count * _config.MaxUsagesPerEngine;
@@ -48,6 +55,40 @@ namespace ZeroReact.JsPool
                                     CreateEngine();
                                 }
                             }
+                        }
+                    })
+                {
+                    IsBackground = true
+                }
+                .Start();
+
+            new Thread(
+                    () =>
+                    {
+                        while (!disposed.IsSet())
+                        {
+                            _engineMaintenance.WaitOne();
+
+                            while (_enginesToMaintenance.TryDequeue(out var maintenangeEngine))
+                            {
+                                if (!disposed.IsSet())
+                                {
+                                    return;
+                                }
+
+                                if (!_engines.TryGetValue(maintenangeEngine, out var usageCount) ||
+                                    _config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine
+                                )
+                                {
+                                    DisposeEngine(maintenangeEngine);
+                                }
+                                else if (maintenangeEngine.SupportsGarbageCollection &&
+                                         _config.GarbageCollectionInterval > 0) //gc
+                                {
+                                    maintenangeEngine.CollectGarbage();
+                                }
+                            }
+
                         }
                     })
                 {
@@ -67,8 +108,10 @@ namespace ZeroReact.JsPool
 
         public void DisposeEngine(ChakraCoreJsEngine engine)
         {
-            engine?.Dispose();
             _engines.TryRemove(engine, out _);
+            engine._dispatcher._sharedQueue = null;
+            engine._dispatcher._sharedQueueEnqeued = null;
+            engine?.Dispose();
 
             if (!disposed.IsSet())
             {
@@ -81,46 +124,68 @@ namespace ZeroReact.JsPool
         {
             if (disposed.Set())
             {
-                foreach (var engine in _engines.Keys)
+                foreach (var engine in _engines.Keys.ToArray())
                 {
                     DisposeEngine(engine);
                 }
 
                 _engines.Clear();
+                _sharedQueue.Clear();
                 _enginePopulater?.Dispose();
+                _sharedQueueEnqeued?.Dispose();
             }
         }
 
-        public ConcurrentQueue<ScriptDispatcher.ActionTask> _sharedQueue = new ConcurrentQueue<ScriptDispatcher.ActionTask>();
-        public AutoResetEvent _sharedQueueEnqeued = new AutoResetEvent(false);
+        private static object obj = new object();
 
         public Task ScheduleWork(Action<ChakraCoreJsEngine> work)
         {
-            var task = new ScriptDispatcher.ActionTask(
-                jsEngine =>
+            var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            _sharedQueue.Enqueue(jsEngine =>
+            {
+                if (disposed.IsSet()) //test
+                {
+                    tcs.SetCanceled();
+                    return;
+                }
+
+                try
+                {
+                    work(jsEngine);
+                    tcs.SetResult(obj);
+                }
+                catch (Exception e)
+                {
+                    tcs.SetException(e);
+                }
+                finally
                 {
                     _engines[jsEngine]++;
-                    work(jsEngine);
 
-                    //MaintenanceEngine
-                    if (disposed.IsSet() ||
-                        !_engines.TryGetValue(jsEngine, out var usageCount) || //idk how
-                        (_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine)) //MaxUsagesPerEngine
+                    if (!_engines.TryGetValue(jsEngine, out var usageCount) ||
+                        (_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine) ||
+                        (_config.GarbageCollectionInterval > 0 && usageCount % _config.GarbageCollectionInterval == 0))
                     {
-                        //DisposeEngine(jsEngine);
-                        return;
+                        MaintenanceEngine(jsEngine);
                     }
-
-                    if (_config.GarbageCollectionInterval > 0 && usageCount % _config.GarbageCollectionInterval == 0) //gc
-                    {
-                        //jsEngine.CollectGarbage();
-                    }
-                });
-
-            _sharedQueue.Enqueue(task);
+                }
+            });
             _sharedQueueEnqeued.Set();
 
-            return task.TaskCompletionSource.Task;
+            return tcs.Task;
+        }
+        
+        private void MaintenanceEngine(ChakraCoreJsEngine engine)
+        {
+            if (disposed.IsSet()) //test
+            {
+                DisposeEngine(engine);
+                return;
+            }
+            
+            _enginesToMaintenance.Enqueue(engine);
+            _engineMaintenance.Set();
         }
     }
 }

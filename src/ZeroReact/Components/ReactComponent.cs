@@ -32,22 +32,19 @@ namespace ZeroReact.Components
                 return Task.CompletedTask;
             }
 
-            var executeEngineCode = GetEngineCodeExecute();
-
             var work = _javaScriptEngineFactory.ScheduleWork(
                  engine =>
                  {
-                     try
+                     using (var executeEngineCode = GetEngineCodeExecute())
                      {
-                         OutputHtml = engine.Evaluate(executeEngineCode.Memory);
-                     }
-                     catch (JsRuntimeException ex)
-                     {
-                         ExceptionHandler(ex, ComponentName, ContainerId);
-                     }
-                     finally
-                     {
-                         executeEngineCode.Dispose();
+                         try
+                         {
+                             OutputHtml = engine.Evaluate(executeEngineCode.Memory);
+                         }
+                         catch (JsRuntimeException ex)
+                         {
+                             ExceptionHandler(ex, ComponentName, ContainerId);
+                         }
                      }
                  });
 

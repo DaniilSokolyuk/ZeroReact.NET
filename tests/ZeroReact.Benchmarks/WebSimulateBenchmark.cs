@@ -16,7 +16,7 @@ namespace ZeroReact.Benchmarks
         public async Task Environment_CreateComponent()
         {
 
-            var tasks = Enumerable.Range(0, 5).Select(
+            var tasks = Enumerable.Range(0, 15).Select(
                 async x =>
                 {
                     var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();
@@ -33,7 +33,7 @@ namespace ZeroReact.Benchmarks
         [Benchmark]
 		public async Task ZeroReact_CreateComponent()
 		{
-		    var tasks = Enumerable.Range(0, 5).Select(
+		    var tasks = Enumerable.Range(0, 15).Select(
 		        async x =>
 		        {
 		            using (var scope = sp.CreateScope())
