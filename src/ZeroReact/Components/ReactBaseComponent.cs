@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
+using System.Runtime.CompilerServices;
 using JavaScriptEngineSwitcher.ChakraCore.JsRt;
 using Newtonsoft.Json;
 using ZeroReact.JsPool;
@@ -110,7 +111,7 @@ namespace ZeroReact.Components
                 }
             }
 
-            writer.Write(SerializedProps.Memory.Span);
+            WriteSpan(writer, SerializedProps);
         }
 
         protected IMemoryOwner<char> OutputHtml { get; set; }
@@ -118,7 +119,7 @@ namespace ZeroReact.Components
         {
             if (ServerOnly)
             {
-                writer.Write(OutputHtml.Memory.Span);
+                WriteSpan(writer, OutputHtml);
                 return;
             }
 
@@ -138,12 +139,27 @@ namespace ZeroReact.Components
 
             if (!ClientOnly)
             {
-                writer.Write(OutputHtml.Memory.Span);
+                WriteSpan(writer, OutputHtml);
             }
 
             writer.Write("</");
             writer.Write(ContainerTag);
             writer.Write('>');
+        }
+        
+        
+        //TODO: because PagedBufferedTextWriter not has override for SPANS
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void WriteSpan(TextWriter viewWriter, IMemoryOwner<char> owner)
+        {
+            if (owner is PooledCharBuffer buffer)
+            {
+                viewWriter.Write(buffer._array, 0, buffer._length);
+            }
+            else
+            {
+                viewWriter.Write(owner.Memory.Span);
+            }
         }
 
         /// <summary>

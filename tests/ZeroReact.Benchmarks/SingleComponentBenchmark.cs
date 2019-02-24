@@ -30,7 +30,7 @@ namespace ZeroReact.Benchmarks
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
 	    public void Environment_CreateComponent()
 	    {
 		    var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();

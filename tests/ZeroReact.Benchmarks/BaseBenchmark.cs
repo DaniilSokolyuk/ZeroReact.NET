@@ -67,8 +67,8 @@ namespace ZeroReact.Benchmarks
 				.SetReuseJavaScriptEngines(true)
 				.SetAllowJavaScriptPrecompilation(false);
 			configuration
-				.SetStartEngines(10)
-				.SetMaxEngines(20)
+				.SetStartEngines(2)
+				.SetMaxEngines(4)
 				.SetMaxUsagesPerEngine(4)
 				.SetLoadBabel(false)
 				.AddScriptWithoutTransform("Sample.js");
