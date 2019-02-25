@@ -12,7 +12,7 @@ Almost zero allocations and truly async alternative to [ReactJS.NET](https://git
 * @Html.ReactWithInit to @await ReactWithInitAsync
 * @Html.ReactRouter to @await Html.ReactRouterAsync
 3. Register ZeroReact in service collection, example [here](https://github.com/DaniilSokolyuk/ZeroReact.NET/blob/2795b6d2dcf5b3e902ebbd7b21b6470462a182ac/src/ZeroReact.Sample.Webpack.AspNetCore/Startup.cs#L19)
-4. (Install native implementations of ChakraCore)[https://github.com/Taritsyn/JavaScriptEngineSwitcher/wiki/ChakraCore], without JavaScriptEngineSwitcher.ChakraCore, ZeroReact contains modified version of JavaScriptEngineSwitcher.ChakraCore for performance reasons
+4. [Install native implementations of ChakraCore](https://github.com/Taritsyn/JavaScriptEngineSwitcher/wiki/ChakraCore), without JavaScriptEngineSwitcher.ChakraCore, ZeroReact contains modified version of JavaScriptEngineSwitcher.ChakraCore for performance reasons
 
 
 # Benchmarks
