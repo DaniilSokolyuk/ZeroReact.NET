@@ -14,7 +14,7 @@ namespace ZeroReact.Benchmarks
 		private readonly NoTextWriter tk = new NoTextWriter();
 
         [Benchmark]
-        public async Task ZeroReact_CreateComponent()
+        public async Task ZeroReact_RenderSingle()
         {
             using (var scope = sp.CreateScope())
             {
@@ -31,7 +31,7 @@ namespace ZeroReact.Benchmarks
         }
 
         [Benchmark]
-	    public void Environment_CreateComponent()
+	    public void ReactJs_RenderSingle()
 	    {
 		    var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();
 		    var component = environment.CreateComponent("HelloWorld", _testData, serverOnly: true);

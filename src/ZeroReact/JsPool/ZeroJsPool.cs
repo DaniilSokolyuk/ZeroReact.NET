@@ -100,8 +100,13 @@ namespace ZeroReact.JsPool
         private void CreateEngine()
         {
             var engine = _config.EngineFactory();
-            engine._dispatcher._sharedQueue = _sharedQueue;
-            engine._dispatcher._sharedQueueEnqeued = _sharedQueueEnqeued;
+
+            engine._dispatcher.Invoke(
+                () =>
+                {
+                    engine._dispatcher._sharedQueue = _sharedQueue;
+                    engine._dispatcher._sharedQueueEnqeued = _sharedQueueEnqeued;
+                });
 
             _engines.TryAdd(engine, 0);
         }

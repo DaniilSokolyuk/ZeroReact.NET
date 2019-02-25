@@ -40,15 +40,15 @@ namespace ZeroReact
 
         /// <summary>
         /// Gets or sets the number of engines to initially start when a pool is created. 
-        /// Defaults to <c>Math.Min(Environment.ProcessorCount, 8)</c>.
+        /// Defaults to <c>Math.Max(Environment.ProcessorCount, 4)</c>.
         /// </summary>
-        public int StartEngines { get; set; } = Math.Min(Environment.ProcessorCount, 8);
+        public int StartEngines { get; set; } = Math.Max(Environment.ProcessorCount, 4);
 
         /// <summary>
         /// Gets or sets the number of max engines. 
-        /// Defaults to <c>Math.Max(Environment.ProcessorCount * 2, 16)</c>.
+        /// Defaults  <c>Math.Max(Environment.ProcessorCount * 2, 8)</c>.
         /// </summary>
-        public int MaxEngines { get; set; } = Math.Max(Environment.ProcessorCount * 2, 16);
+        public int MaxEngines { get; set; } = Math.Max(Environment.ProcessorCount * 2, 8);
 
         /// <summary>
         /// Gets or sets the maximum number of times an engine can be reused before it is disposed.

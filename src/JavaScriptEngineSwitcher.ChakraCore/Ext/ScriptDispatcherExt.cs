@@ -58,7 +58,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                 }
                 else
                 {
-                    _queueEnqeued.WaitOne(1000);
+                    _queueEnqeued.WaitOne();
                 }
 
                 while (_queue.TryDequeue(out var next))
@@ -140,18 +140,6 @@ namespace JavaScriptEngineSwitcher.ChakraCore
             }
 
             return (T)InnnerInvokeAsync(() => func()).ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-
-        public Task<object> InvokeAsync(Func<object> func)
-        {
-            VerifyNotDisposed();
-
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
-            return InnnerInvokeAsync(func);
         }
 
         /// <summary>

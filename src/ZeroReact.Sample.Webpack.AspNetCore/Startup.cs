@@ -26,6 +26,7 @@ namespace ZeroReact.Sample.Webpack.AspNetCore
                     config.AddScriptWithoutTransform("~/server.bundle.js");
                     config.LoadReact = false;
                     config.AllowJavaScriptPrecompilation = true;
+                    config.MaxUsagesPerEngine = 2500;
                 });
         }
 

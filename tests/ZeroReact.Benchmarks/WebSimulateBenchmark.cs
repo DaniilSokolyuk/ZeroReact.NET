@@ -10,10 +10,10 @@ namespace ZeroReact.Benchmarks
 {
 	public class WebSimulateBenchmark : BaseBenchmark
 	{
-		private readonly NoTextWriter tk = new NoTextWriter();
+		private readonly NoTextWriter tk = new NoTextWriter(); //TODO: simulate PagedBufferedTextWriter
 
         [Benchmark]
-        public async Task Environment_CreateComponent()
+        public async Task ReactJSNet_WebSimulation()
         {
 
             var tasks = Enumerable.Range(0, 15).Select(
@@ -31,7 +31,7 @@ namespace ZeroReact.Benchmarks
         }
 
         [Benchmark]
-		public async Task ZeroReact_CreateComponent()
+		public async Task ZeroReact_WebSimulation()
 		{
 		    var tasks = Enumerable.Range(0, 15).Select(
 		        async x =>
