@@ -11,9 +11,9 @@ namespace JavaScriptEngineSwitcher.ChakraCore.JsRt
             _length = length;
         }
 
-        private char[] _array;
+        public char[] _array;
 
-        private int _length;
+        public int _length;
 
         public void Dispose()
         {

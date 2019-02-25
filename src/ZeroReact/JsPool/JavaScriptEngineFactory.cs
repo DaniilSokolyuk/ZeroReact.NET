@@ -14,11 +14,7 @@ namespace ZeroReact.JsPool
 {
     public interface IJavaScriptEngineFactory
     {
-        /// <summary>
-        /// Gets a JavaScript engine from the pool.
-        /// </summary>
-        /// <returns>The JavaScript engine</returns>
-        ValueTask<JsEngineOwner> TakeEngineAsync(CancellationToken cancellationToken = default);
+        Task ScheduleWork(Action<ChakraCoreJsEngine> work);
     }
 
     /// <summary>
@@ -113,7 +109,7 @@ namespace ZeroReact.JsPool
             return pool;
         }
 
-        private IJsEngine EngineFactory()
+        private ChakraCoreJsEngine EngineFactory()
         {
             var engine = new ChakraCoreJsEngine(_config.EngineSettings);
 
@@ -200,12 +196,6 @@ namespace ZeroReact.JsPool
             }
         }
 
-        public ValueTask<JsEngineOwner> TakeEngineAsync(CancellationToken cancellationToken = default)
-        {
-            EnsureValidState();
-            return _pool.TakeAsync(cancellationToken);
-        }
-
         private InterlockedStatedFlag disposed;
 
         public void Dispose()
@@ -234,6 +224,12 @@ namespace ZeroReact.JsPool
             {
                 throw _scriptLoadException;
             }
+        }
+
+        public Task ScheduleWork(Action<ChakraCoreJsEngine> work)
+        {
+            EnsureValidState();
+            return _pool.ScheduleWork(work);
         }
     }
 }

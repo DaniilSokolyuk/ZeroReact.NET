@@ -47,7 +47,9 @@ namespace ZeroReact.AspNetCore
 
             reactComponent.Path = path;
 
-            var executionResult = await reactComponent.RenderRouterWithContext();
+            await reactComponent.RenderRouterWithContext();
+
+            var executionResult = reactComponent.RoutingContext;
 
             if (executionResult?.status != null || executionResult?.url != null)
             {

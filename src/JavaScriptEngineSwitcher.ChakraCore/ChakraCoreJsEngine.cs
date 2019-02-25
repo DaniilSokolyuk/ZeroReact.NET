@@ -83,7 +83,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
 		/// <summary>
 		/// Script dispatcher
 		/// </summary>
-		private ScriptDispatcher _dispatcher;
+		public ScriptDispatcher _dispatcher;
 
 		/// <summary>
 		/// Unique document name manager
@@ -152,7 +152,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
 #if NETSTANDARD1_3
 			_dispatcher = new ScriptDispatcher();
 #else
-			_dispatcher = new ScriptDispatcher(chakraCoreSettings.MaxStackSize);
+			_dispatcher = new ScriptDispatcher(chakraCoreSettings.MaxStackSize, this);
 #endif
 			_promiseContinuationCallback = PromiseContinuationCallback;
 

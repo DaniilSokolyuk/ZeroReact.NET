@@ -25,29 +25,30 @@ namespace ZeroReact.Components
         {
         }
 
-        public async Task RenderHtml()
+        public Task RenderHtml()
         {
             if (ClientOnly)
             {
-                return;
+                return Task.CompletedTask;
             }
 
-            using (var executeEngineCode = GetEngineCodeExecute())
-            using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
-            {
-                try
-                {
-                    OutputHtml = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
-                }
-                catch (JsRuntimeException ex)
-                {
-                    ExceptionHandler(ex, ComponentName, ContainerId);
-                }
-                finally
-                {
-                    executeEngineCode.Dispose();
-                }
-            }
+            var work = _javaScriptEngineFactory.ScheduleWork(
+                 engine =>
+                 {
+                     using (var executeEngineCode = GetEngineCodeExecute())
+                     {
+                         try
+                         {
+                             OutputHtml = engine.Evaluate(executeEngineCode.Memory);
+                         }
+                         catch (JsRuntimeException ex)
+                         {
+                             ExceptionHandler(ex, ComponentName, ContainerId);
+                         }
+                     }
+                 });
+
+            return work;
         }
 
         private IMemoryOwner<char> GetEngineCodeExecute()

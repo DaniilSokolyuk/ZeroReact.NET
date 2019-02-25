@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -8,20 +9,24 @@ namespace JavaScriptEngineSwitcher.ChakraCore
     /// <summary>
     /// Provides services for managing the queue of script tasks on the thread with modified stack size
     /// </summary>
-    internal sealed class ScriptDispatcher : IDisposable
+    public sealed class ScriptDispatcher : IDisposable
     {
-        /// <summary>
-        /// Queue of script tasks
-        /// </summary>
-        private readonly Queue<ScriptTask> _queue = new Queue<ScriptTask>();
-        
+        private readonly AutoResetEvent _queueEnqeued = new AutoResetEvent(false);
+        private readonly ConcurrentQueue<ScriptTask> _queue = new ConcurrentQueue<ScriptTask>();
+
+        private readonly ChakraCoreJsEngine _refToEngine;
+
+        public ConcurrentQueue<Action<ChakraCoreJsEngine>> _sharedQueue { get; set; }
+        public AutoResetEvent _sharedQueueEnqeued { get; set; }
+
         /// <summary>
         /// Constructs an instance of script dispatcher
         /// </summary>
         /// <param name="maxStackSize">The maximum stack size, in bytes, to be used by the thread,
         /// or 0 to use the default maximum stack size specified in the header for the executable.</param>
-        public ScriptDispatcher(int maxStackSize)
+        public ScriptDispatcher(int maxStackSize, ChakraCoreJsEngine refToEngine)
         {
+            _refToEngine = refToEngine;
             var thread = new Thread(StartThread, maxStackSize)
             {
                 IsBackground = true,
@@ -39,58 +44,53 @@ namespace JavaScriptEngineSwitcher.ChakraCore
             }
         }
 
-        private int _availableCount;
-        /// <summary>
-        /// The number of workers currently actively engaged in work
-        /// </summary>
-        public int AvailableCount => Thread.VolatileRead(ref _availableCount);
-
         /// <summary>
         /// Starts a thread with modified stack size.
         /// Loops forever, processing script tasks from the queue.
         /// </summary>
         private void StartThread()
         {
-            while (true)
+            while (!_disposed)
             {
-                ScriptTask next;
-
-                lock (_queue)
+                if (_sharedQueueEnqeued != null && _sharedQueue != null)
                 {
-                    if (_queue.Count == 0)
+                    WaitHandle.WaitAny(new[] { _queueEnqeued, _sharedQueueEnqeued }); //todo: optimize
+                }
+                else
+                {
+                    _queueEnqeued.WaitOne(1000);
+                }
+
+                while (_queue.TryDequeue(out var next))
+                {
+                    if (_disposed)
                     {
-                        do
-                        {
-                            if (_disposed)
-                                break;
-
-                            _availableCount++;
-                            Monitor.Wait(_queue);
-                            _availableCount--;
-
-                        } while (_queue.Count == 0);
+                        return;
                     }
 
-                    if (_queue.Count == 0)
+                    try
+                    {
+                        var result = next.Delegate();
+
+                        next.TaskCompletionSource.SetResult(result);
+                    }
+                    catch (Exception e)
+                    {
+                        next.TaskCompletionSource.SetException(e);
+                    }
+                }
+
+                if (_sharedQueueEnqeued != null && _sharedQueue != null)
+                {
+                    while (_sharedQueue.TryDequeue(out var next))
                     {
                         if (_disposed)
-                            break;
-                        else
-                            continue;
+                        {
+                            return;
+                        }
+
+                        next(_refToEngine);
                     }
-
-                    next = _queue.Dequeue();
-                }
-
-                try
-                {
-                    var result = next.Delegate();
-
-                    next.TaskCompletionSource.SetResult(result);
-                }
-                catch (Exception e)
-                {
-                    next.TaskCompletionSource.SetException(e);
                 }
             }
         }
@@ -101,14 +101,8 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         /// <param name="task">Script task</param>
         private void EnqueueTask(ScriptTask task)
         {
-            lock (_queue)
-            {
-                _queue.Enqueue(task);
-                if (_availableCount != 0)
-                {
-                    Monitor.Pulse(_queue); // wake up someone
-                }
-            }
+            _queue.Enqueue(task);
+            _queueEnqeued.Set();
         }
 
         /// <summary>
@@ -148,7 +142,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
             return (T)InnnerInvokeAsync(() => func()).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
-        public async Task<T> InvokeAsync<T>(Func<T> func)
+        public Task<object> InvokeAsync(Func<object> func)
         {
             VerifyNotDisposed();
 
@@ -157,7 +151,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                 throw new ArgumentNullException(nameof(func));
             }
 
-            return (T)await InnnerInvokeAsync(() => func());
+            return InnnerInvokeAsync(func);
         }
 
         /// <summary>
@@ -192,20 +186,17 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         public void Dispose()
         {
             _disposed = true;
-            lock (_queue)
-            {
-                Monitor.PulseAll(_queue);
-            }
+            _queue.Clear();
+            _queueEnqeued.Set();
+            _queueEnqeued.Dispose();
         }
 
         #endregion
 
-        #region Internal types
-
         /// <summary>
         /// Represents a script task, that must be executed on separate thread
         /// </summary>
-        private readonly struct ScriptTask
+        public readonly struct ScriptTask
         {
             /// <summary>
             /// Gets a delegate to invocation
@@ -226,7 +217,5 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                 TaskCompletionSource = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
             }
         }
-
-        #endregion
     }
 }

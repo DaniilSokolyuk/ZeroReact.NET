@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Buffers;
-using System.IO;
 using System.Threading.Tasks;
-using JavaScriptEngineSwitcher.ChakraCore;
 using JavaScriptEngineSwitcher.Core;
 using Newtonsoft.Json;
 using ZeroReact.JsPool;
@@ -12,8 +10,6 @@ namespace ZeroReact.Components
 {
     public sealed class ReactRouterComponent : ReactBaseComponent
     {
-        public string Path { get; set; }
-
         public ReactRouterComponent(
             ReactConfiguration configuration,
             IReactIdGenerator reactIdGenerator,
@@ -26,31 +22,39 @@ namespace ZeroReact.Components
         {
         }
 
-        public async Task<RoutingContext> RenderRouterWithContext()
+        public string Path { get; set; }
+
+        public RoutingContext RoutingContext { get; private set; }
+
+        public Task RenderRouterWithContext()
         {
             if (ClientOnly)
             {
-                return null;
+                return Task.CompletedTask;
             }
 
-            using (var executeEngineCode = GetEngineCodeExecute())
-            using (var engineOwner = await _javaScriptEngineFactory.TakeEngineAsync())
-            {
-                try
+            var work = _javaScriptEngineFactory.ScheduleWork(
+                engine =>
                 {
-                    OutputHtml = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(executeEngineCode.Memory);
-
-                    using (var json = await ((ChakraCoreJsEngine)engineOwner.Engine).EvaluateUtf16StringAsync(StringifyJson))
+                    using (var executeEngineCode = GetEngineCodeExecute())
                     {
-                        return JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span)); //TODO: manually on spans, model is easy
+                        try
+                        {
+                            OutputHtml = engine.Evaluate(executeEngineCode.Memory);
+
+                            using (var json = engine.Evaluate(StringifyJson))
+                            {
+                                RoutingContext = JsonConvert.DeserializeObject<RoutingContext>(new string(json.Memory.Span)); //TODO: manually on spans, model is easy
+                            }
+                        }
+                        catch (JsRuntimeException ex)
+                        {
+                            ExceptionHandler(ex, ComponentName, ContainerId);
+                        }
                     }
-                }
-                catch (JsRuntimeException ex)
-                {
-                    ExceptionHandler(ex, ComponentName, ContainerId);
-                    return null;
-                }
-            }
+                });
+
+            return work;
         }
 
         private static readonly ReadOnlyMemory<char> StringifyJson = "JSON.stringify(context);".AsMemory();
