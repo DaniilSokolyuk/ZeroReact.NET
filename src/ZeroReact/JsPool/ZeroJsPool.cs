@@ -71,7 +71,7 @@ namespace ZeroReact.JsPool
 
                             while (_enginesToMaintenance.TryDequeue(out var maintenangeEngine))
                             {
-                                if (!disposed.IsSet())
+                                if (disposed.IsSet())
                                 {
                                     return;
                                 }
@@ -108,14 +108,21 @@ namespace ZeroReact.JsPool
 
         public void DisposeEngine(ChakraCoreJsEngine engine)
         {
-            _engines.TryRemove(engine, out _);
-            engine._dispatcher._sharedQueue = null;
-            engine._dispatcher._sharedQueueEnqeued = null;
-            engine?.Dispose();
-
-            if (!disposed.IsSet())
+            if (_engines.TryRemove(engine, out _))
             {
-                _enginePopulater.Set();
+                engine._dispatcher.Invoke(
+                    () =>
+                    {
+                        engine._dispatcher._sharedQueue = null;
+                        engine._dispatcher._sharedQueueEnqeued = null;
+                    });
+
+                engine.Dispose();
+
+                if (!disposed.IsSet())
+                {
+                    _enginePopulater.Set();
+                }
             }
         }
 
@@ -161,13 +168,13 @@ namespace ZeroReact.JsPool
                 }
                 finally
                 {
-                    _engines[jsEngine]++;
-
-                    if (!_engines.TryGetValue(jsEngine, out var usageCount) ||
-                        (_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine) ||
-                        (_config.GarbageCollectionInterval > 0 && usageCount % _config.GarbageCollectionInterval == 0))
+                    if (_engines.TryGetValue(jsEngine, out var usageCount) && _engines.TryUpdate(jsEngine, usageCount+1, usageCount))
                     {
-                        MaintenanceEngine(jsEngine);
+                        if ((_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine) ||
+                            (_config.GarbageCollectionInterval > 0 && usageCount % _config.GarbageCollectionInterval == 0))
+                        {
+                            MaintenanceEngine(jsEngine);
+                        }
                     }
                 }
             });
