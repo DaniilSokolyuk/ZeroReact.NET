@@ -1,4 +1,4 @@
-# ZeroReact.NET [![Build status](https://ci.appveyor.com/api/projects/status/9v382r4s13dn91d9?svg=true)](https://ci.appveyor.com/project/DaniilSokolyuk/zeroreact-net)
+# ZeroReact.NET [![Build status](https://ci.appveyor.com/api/projects/status/9v382r4s13dn91d9?svg=true)](https://ci.appveyor.com/project/DaniilSokolyuk/zeroreact-net) [![NuGet Version](https://buildstats.info/nuget/ZeroReact.AspNetCore)](https://www.nuget.org/packages/ZeroReact.AspNetCore/) 
 
 Almost zero allocations and truly async alternative to [ReactJS.NET](https://github.com/reactjs/React.NET)
 
