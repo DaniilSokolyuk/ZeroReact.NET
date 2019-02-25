@@ -1,8 +1,17 @@
-# ZeroReact.NET
-Almost zero allocations and truly async alternative to ReactJS.NET
+# ZeroReact.NET [![Build status](https://ci.appveyor.com/api/projects/status/9v382r4s13dn91d9?svg=true)](https://ci.appveyor.com/project/DaniilSokolyuk/zeroreact-net)
 
+Almost zero allocations and truly async alternative to [ReactJS.NET](https://github.com/reactjs/React.NET)
 
+* Not supported On-the-fly JSX to JavaScript compilation
+* Not supported render functions (ReactJS.NET v4 feature) (planned)
 
+# Migration from ReactJS.NET
+1. Make sure you use @await Html.PartialAsync and @await Html.RenderAsync on cshtml views, synchronous calls can deadlock application
+2. Replace 
+* @Html.React to @await Html.React
+* @Html.ReactWithInit to @await ReactWithInitAsync
+* @Html.ReactRouterAsync to @await Html.ReactRouterAsync
+3. Register ZeroReact in service collection, example [here](https://github.com/DaniilSokolyuk/ZeroReact.NET/blob/2795b6d2dcf5b3e902ebbd7b21b6470462a182ac/src/ZeroReact.Sample.Webpack.AspNetCore/Startup.cs#L19)
 
 # Benchmarks
 
