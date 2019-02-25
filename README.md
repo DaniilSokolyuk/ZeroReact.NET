@@ -6,12 +6,14 @@ Almost zero allocations and truly async alternative to [ReactJS.NET](https://git
 * Not supported render functions (ReactJS.NET v4 feature) (planned)
 
 # Migration from ReactJS.NET
-1. Make sure you use @await Html.PartialAsync and @await Html.RenderAsync on cshtml views, synchronous calls can deadlock application
+1. Make sure you use @await Html.PartialAsync and @await Html.RenderAsync on cshtml views, synchronous calls can deadlock application 
 2. Replace 
 * @Html.React to @await Html.React
 * @Html.ReactWithInit to @await ReactWithInitAsync
 * @Html.ReactRouter to @await Html.ReactRouterAsync
 3. Register ZeroReact in service collection, example [here](https://github.com/DaniilSokolyuk/ZeroReact.NET/blob/2795b6d2dcf5b3e902ebbd7b21b6470462a182ac/src/ZeroReact.Sample.Webpack.AspNetCore/Startup.cs#L19)
+4. (Install native implementations of ChakraCore)[https://github.com/Taritsyn/JavaScriptEngineSwitcher/wiki/ChakraCore], without JavaScriptEngineSwitcher.ChakraCore, ZeroReact contains modified version of JavaScriptEngineSwitcher.ChakraCore for performance reasons
+
 
 # Benchmarks
 
