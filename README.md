@@ -2,7 +2,7 @@
 
 Almost zero allocations and truly async alternative to [ReactJS.NET](https://github.com/reactjs/React.NET)
 
-* Not supported On-the-fly JSX to JavaScript compilation
+* Not supported On-the-fly JSX to JavaScript compilation (only AddScriptWithoutTransform for performance reasons)
 * Not supported render functions (ReactJS.NET v4 feature) (planned)
 
 # Migration from ReactJS.NET
