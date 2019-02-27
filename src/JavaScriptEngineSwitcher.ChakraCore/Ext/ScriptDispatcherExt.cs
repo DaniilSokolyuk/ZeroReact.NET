@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,13 +62,8 @@ namespace JavaScriptEngineSwitcher.ChakraCore
                     _queueEnqeued.WaitOne();
                 }
 
-                while (_queue.TryDequeue(out var next))
+                while (!_disposed && _queue.TryDequeue(out var next))
                 {
-                    if (_disposed)
-                    {
-                        return;
-                    }
-
                     try
                     {
                         var result = next.Delegate();
@@ -82,13 +78,8 @@ namespace JavaScriptEngineSwitcher.ChakraCore
 
                 if (_sharedQueueEnqeued != null && _sharedQueue != null)
                 {
-                    while (_sharedQueue.TryDequeue(out var next))
+                    while (!_disposed && _sharedQueue.TryDequeue(out var next))
                     {
-                        if (_disposed)
-                        {
-                            return;
-                        }
-
                         next(_refToEngine);
                     }
                 }

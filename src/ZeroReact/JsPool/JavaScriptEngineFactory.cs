@@ -87,6 +87,7 @@ namespace ZeroReact.JsPool
             {
                 var oldPool = _pool;
                 _pool = CreatePool();
+                _scriptLoadException = null;
                 oldPool.Dispose();
             }
         }
