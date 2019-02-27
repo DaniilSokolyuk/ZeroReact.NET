@@ -58,7 +58,8 @@ namespace ZeroReact.JsPool
                         }
                     })
                 {
-                    IsBackground = true
+                    IsBackground = true,
+                    Name = "Engine creator"
                 }
                 .Start();
 
@@ -92,8 +93,9 @@ namespace ZeroReact.JsPool
                         }
                     })
                 {
-                    IsBackground = true
-                }
+                    IsBackground = true,
+                    Name = "Engine maintenance"
+            }
                 .Start();
         }
 
