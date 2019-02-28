@@ -62,27 +62,27 @@ namespace ZeroReact.JsPool
             _cache = cache;
             _fileSystem = fileSystem;
             _pool = CreatePool();
-            
-            _fileSystemWatcher = BeginFileWatcher();
+
             _watchedFiles = _config.ScriptFilesWithoutTransform.Select(_fileSystem.MapPath).ToHashSet();
+
+            BeginFileWatcher();
         }
         
-        private FileSystemWatcher BeginFileWatcher()
+        private void BeginFileWatcher()
         {
             _timer = new Timer(OnTimer, null, Timeout.Infinite, Timeout.Infinite);
 
-            var watcher = new FileSystemWatcher(_fileSystem.MapPath("~/"))
+            _fileSystemWatcher = new FileSystemWatcher(_fileSystem.MapPath("~/"))
             {
                 IncludeSubdirectories = true,
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName
             };
-            watcher.Changed += OnFileChanged;
-            watcher.Created += OnFileChanged;
-            watcher.Deleted += OnFileChanged;
-            watcher.Renamed += OnFileChanged;
+            _fileSystemWatcher.Changed += OnFileChanged;
+            _fileSystemWatcher.Created += OnFileChanged;
+            _fileSystemWatcher.Deleted += OnFileChanged;
+            _fileSystemWatcher.Renamed += OnFileChanged;
 
-            watcher.EnableRaisingEvents = true;
-            return watcher;
+            _fileSystemWatcher.EnableRaisingEvents = true;
 
             void OnFileChanged(object source, FileSystemEventArgs e)
             {
@@ -94,7 +94,7 @@ namespace ZeroReact.JsPool
 
             void OnTimer(object state)
             {
-                lock (_timer)
+                lock (_watchedFiles)
                 {
                     var oldPool = _pool;
                     _pool = CreatePool();
