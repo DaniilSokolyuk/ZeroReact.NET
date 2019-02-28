@@ -35,8 +35,6 @@ namespace ZeroReact.Utils
         public static bool TryExecuteFileWithPrecompilation(this IJsEngine engine, ICache cache,
             IFileSystem fileSystem, string path, Func<string, string> scriptLoader = null)
         {
-            EnsurePrecompilationAvailability(engine, cache);
-
             var cacheKey = string.Format(PRECOMPILED_JS_FILE_CACHE_KEY, path);
             var precompiledScript = cache.Get<IPrecompiledScript>(cacheKey);
 
@@ -69,8 +67,6 @@ namespace ZeroReact.Utils
         public static bool TryExecuteResourceWithPrecompilation(this IJsEngine engine, ICache cache,
             string resourceName, Assembly assembly)
         {
-            EnsurePrecompilationAvailability(engine, cache);
-
             var cacheKey = string.Format(PRECOMPILED_JS_RESOURCE_CACHE_KEY, resourceName);
             var precompiledScript = cache.Get<IPrecompiledScript>(cacheKey);
 
@@ -87,30 +83,6 @@ namespace ZeroReact.Utils
             engine.Execute(precompiledScript);
 
             return true;
-        }
-
-        /// <summary>
-        /// Ensures that the script pre-compilation is available.
-        /// </summary>
-        /// <param name="engine">Instance of the JavaScript engine</param>
-        /// <param name="cache">Cache used for storing the pre-compiled scripts</param>
-        private static void EnsurePrecompilationAvailability(IJsEngine engine, ICache cache)
-        {
-            if (!engine.SupportsScriptPrecompilation)
-            {
-                throw new ZeroReactException(string.Format(
-                    "The {0} version {1} does not support the script pre-compilation.",
-                    engine.Name,
-                    engine.Version
-                ));
-            }
-
-            if (cache is NullCache)
-            {
-                throw new ZeroReactException(string.Format(
-                    "Usage of the script pre-compilation without caching does not make sense."
-                ));
-            }
         }
     }
 }

@@ -46,6 +46,7 @@ namespace ZeroReact.JsPool
 		private Exception _scriptLoadException;
         
         private FileSystemWatcher _fileSystemWatcher;
+        private Timer _timer;
         private HashSet<string> _watchedFiles;
 
         /// <summary>
@@ -68,6 +69,8 @@ namespace ZeroReact.JsPool
         
         private FileSystemWatcher BeginFileWatcher()
         {
+            _timer = new Timer(OnTimer, null, Timeout.Infinite, Timeout.Infinite);
+
             var watcher = new FileSystemWatcher(_fileSystem.MapPath("~/"))
             {
                 IncludeSubdirectories = true,
@@ -77,18 +80,27 @@ namespace ZeroReact.JsPool
             watcher.Created += OnFileChanged;
             watcher.Deleted += OnFileChanged;
             watcher.Renamed += OnFileChanged;
+
             watcher.EnableRaisingEvents = true;
             return watcher;
-        }
 
-        private void OnFileChanged(object source, FileSystemEventArgs e)
-        {
-            if (_watchedFiles.Contains(e.FullPath))
+            void OnFileChanged(object source, FileSystemEventArgs e)
             {
-                var oldPool = _pool;
-                _pool = CreatePool();
-                _scriptLoadException = null;
-                oldPool.Dispose();
+                if (_watchedFiles.Contains(e.FullPath))
+                {
+                    _timer.Change(250, Timeout.Infinite);
+                }
+            }
+
+            void OnTimer(object state)
+            {
+                lock (_timer)
+                {
+                    var oldPool = _pool;
+                    _pool = CreatePool();
+                    _scriptLoadException = null;
+                    oldPool.Dispose();
+                }
             }
         }
 
@@ -203,13 +215,17 @@ namespace ZeroReact.JsPool
         {
             if (disposed.Set())
             {
+                _fileSystemWatcher.Dispose();
+                _fileSystemWatcher = null;
+
+                _timer.Dispose();
+                _timer = null;
+
                 if (_pool != null)
                 {
                     _pool.Dispose();
                     _pool = null;
 
-                    _fileSystemWatcher.Dispose();
-                    _fileSystemWatcher = null;
                 }
             }
         }

@@ -58,10 +58,10 @@ namespace ZeroReact.JsPool
                             }
                         }
                     })
-            {
-                IsBackground = true,
-                Name = "Engine creator"
-            }
+                {
+                    IsBackground = true,
+                    Name = "Engine creator"
+                }
                 .Start();
 
             new Thread(
@@ -92,10 +92,10 @@ namespace ZeroReact.JsPool
                             }
                         }
                     })
-            {
-                IsBackground = true,
-                Name = "Engine maintenance"
-            }
+                {
+                    IsBackground = true,
+                    Name = "Engine maintenance"
+                }
                 .Start();
         }
 
@@ -131,21 +131,23 @@ namespace ZeroReact.JsPool
 
             try
             {
-                engine._dispatcher.Invoke(
+                engine._dispatcher?.Invoke(
                     () =>
                     {
                         engine._dispatcher._sharedQueue = null;
                         engine._dispatcher._sharedQueueEnqeued = null;
                     });
             }
-            finally
+            catch (Exception ex)
             {
-                engine.Dispose();
+                // ignored
+            }
 
-                if (!disposed.IsSet())
-                {
-                    _enginePopulater.Set();
-                }
+            engine.Dispose();
+
+            if (!disposed.IsSet())
+            {
+                _enginePopulater.Set();
             }
         }
 
