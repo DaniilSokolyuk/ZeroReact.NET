@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using JavaScriptEngineSwitcher.Core.Utilities;
+
 namespace JavaScriptEngineSwitcher.ChakraCore
 {
     /// <summary>
@@ -12,8 +12,8 @@ namespace JavaScriptEngineSwitcher.ChakraCore
     /// </summary>
     public sealed class ScriptDispatcher : IDisposable
     {
-        private readonly AutoResetEvent _queueEnqeued = new AutoResetEvent(false);
-        private readonly ConcurrentQueue<ScriptTask> _queue = new ConcurrentQueue<ScriptTask>();
+        private AutoResetEvent _queueEnqeued = new AutoResetEvent(false);
+        private ConcurrentQueue<ScriptTask> _queue = new ConcurrentQueue<ScriptTask>();
 
         private readonly ChakraCoreJsEngine _refToEngine;
 
@@ -39,7 +39,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         [MethodImpl((MethodImplOptions)256 /* AggressiveInlining */)]
         private void VerifyNotDisposed()
         {
-            if (_disposed)
+            if (_disposedFlag.IsSet())
             {
                 throw new ObjectDisposedException(ToString());
             }
@@ -51,18 +51,22 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         /// </summary>
         private void StartThread()
         {
-            while (!_disposed)
+            while (true)
             {
                 if (_sharedQueueEnqeued != null && _sharedQueue != null)
                 {
                     WaitHandle.WaitAny(new[] { _queueEnqeued, _sharedQueueEnqeued }); //todo: optimize
                 }
-                else
+                else if (_queue != null)
                 {
                     _queueEnqeued.WaitOne();
                 }
+                else
+                {
+                    return;
+                }
 
-                while (!_disposed && _queue.TryDequeue(out var next))
+                while (_queue != null && _queue.TryDequeue(out var next))
                 {
                     try
                     {
@@ -78,7 +82,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
 
                 if (_sharedQueueEnqeued != null && _sharedQueue != null)
                 {
-                    while (!_disposed && _sharedQueue.TryDequeue(out var next))
+                    while (_queue != null && _queue.IsEmpty && _sharedQueue.TryDequeue(out var next))
                     {
                         next(_refToEngine);
                     }
@@ -157,17 +161,30 @@ namespace JavaScriptEngineSwitcher.ChakraCore
         #region IDisposable implementation
 
 
-        private volatile bool _disposed;
+        private InterlockedStatedFlag _disposedFlag = new InterlockedStatedFlag();
 
         /// <summary>
         /// Destroys object
         /// </summary>
         public void Dispose()
         {
-            _disposed = true;
-            _queue.Clear();
-            _queueEnqeued.Set();
-            _queueEnqeued.Dispose();
+            if (_disposedFlag.Set())
+            {
+                InnnerInvokeAsync(
+                    () =>
+                    {
+                        _queue.Clear();
+                        _queue = null;
+
+                        return null;
+                    }).ConfigureAwait(false).GetAwaiter().GetResult();
+
+                if (_queueEnqeued != null)
+                {
+                    _queueEnqeued.Dispose();
+                    _queueEnqeued = null;
+                }
+            }
         }
 
         #endregion

@@ -29,7 +29,7 @@ namespace ZeroReact.JsPool
             new Thread(
                     () =>
                     {
-                        while (!disposed.IsSet())
+                        while (!_disposedFlag.IsSet())
                         {
                             if (_engines.Count >= _config.StartEngines)
                             {
@@ -37,13 +37,13 @@ namespace ZeroReact.JsPool
                             }
 
                             //pupulater
-                            while (!disposed.IsSet() && _engines.Count < _config.StartEngines)
+                            while (!_disposedFlag.IsSet() && _engines.Count < _config.StartEngines)
                             {
                                 CreateEngine();
                             }
 
                             //MaxUsagesPerEngine
-                            if (!disposed.IsSet() && _config.MaxUsagesPerEngine > 0 &&
+                            if (!_disposedFlag.IsSet() && _config.MaxUsagesPerEngine > 0 &&
                                 _engines.Count < _config.MaxEngines)
                             {
                                 var currentUsages = _engines.Values.Sum();
@@ -54,6 +54,7 @@ namespace ZeroReact.JsPool
                                 if (engineAverageOverflow)
                                 {
                                     CreateEngine();
+                                    _enginePopulater.Set();
                                 }
                             }
                         }
@@ -67,20 +68,19 @@ namespace ZeroReact.JsPool
             new Thread(
                     () =>
                     {
-                        while (!disposed.IsSet())
+                        while (!_disposedFlag.IsSet())
                         {
                             _engineMaintenance.WaitOne();
 
                             while (_enginesToMaintenance.TryDequeue(out var maintenangeEngine))
                             {
-                                if (disposed.IsSet())
+                                if (_disposedFlag.IsSet())
                                 {
                                     return;
                                 }
 
                                 if (!_engines.TryGetValue(maintenangeEngine, out var usageCount) ||
-                                    _config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine
-                                )
+                                    (_engines.Count > _config.StartEngines && _config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine))
                                 {
                                     DisposeEngine(maintenangeEngine);
                                 }
@@ -101,12 +101,17 @@ namespace ZeroReact.JsPool
 
         private void CreateEngine()
         {
+            if (_disposedFlag.IsSet()) //test
+            {
+                return;
+            }
+
             var engine = _config.EngineFactory();
 
             engine._dispatcher.Invoke(
                 () =>
                 {
-                    if (disposed.IsSet())
+                    if (_disposedFlag.IsSet()) //engine creation is really slow
                     {
                         return;
                     }
@@ -115,7 +120,7 @@ namespace ZeroReact.JsPool
                     engine._dispatcher._sharedQueueEnqeued = _sharedQueueEnqeued;
                 });
 
-            if (disposed.IsSet())
+            if (_disposedFlag.IsSet())
             {
                 DisposeEngine(engine);
             }
@@ -145,16 +150,16 @@ namespace ZeroReact.JsPool
 
             engine.Dispose();
 
-            if (!disposed.IsSet())
+            if (!_disposedFlag.IsSet())
             {
                 _enginePopulater.Set();
             }
         }
 
-        private InterlockedStatedFlag disposed;
+        private InterlockedStatedFlag _disposedFlag = new InterlockedStatedFlag();
         public void Dispose()
         {
-            if (disposed.Set())
+            if (_disposedFlag.Set())
             {
                 _engineMaintenance.Set();
                 _enginePopulater.Set();
@@ -180,7 +185,7 @@ namespace ZeroReact.JsPool
 
             _sharedQueue.Enqueue(jsEngine =>
             {
-                if (disposed.IsSet()) //test
+                if (_disposedFlag.IsSet()) //test
                 {
                     tcs.SetCanceled();
                     return;
@@ -214,7 +219,7 @@ namespace ZeroReact.JsPool
 
         private void MaintenanceEngine(ChakraCoreJsEngine engine)
         {
-            if (disposed.IsSet()) //test
+            if (_disposedFlag.IsSet()) //test
             {
                 DisposeEngine(engine);
                 return;
