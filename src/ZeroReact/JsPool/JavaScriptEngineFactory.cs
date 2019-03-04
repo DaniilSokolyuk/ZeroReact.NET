@@ -88,7 +88,7 @@ namespace ZeroReact.JsPool
             {
                 if (_watchedFiles.Contains(e.FullPath))
                 {
-                    _timer.Change(250, Timeout.Infinite);
+                    _timer.Change(500, Timeout.Infinite);
                 }
             }
 

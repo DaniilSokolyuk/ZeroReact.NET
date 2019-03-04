@@ -14,13 +14,13 @@ namespace ZeroReact.JsPool
         private readonly ZeroJsPoolConfig _config;
 
         private readonly ConcurrentDictionary<ChakraCoreJsEngine, int> _engines = new ConcurrentDictionary<ChakraCoreJsEngine, int>();
-        private readonly AutoResetEvent _enginePopulater = new AutoResetEvent(false);
+        private AutoResetEvent _enginePopulater = new AutoResetEvent(false);
 
-        private readonly AutoResetEvent _engineMaintenance = new AutoResetEvent(false);
+        private AutoResetEvent _engineMaintenance = new AutoResetEvent(false);
         private readonly ConcurrentQueue<ChakraCoreJsEngine> _enginesToMaintenance = new ConcurrentQueue<ChakraCoreJsEngine>();
 
-        private readonly ConcurrentQueue<Action<ChakraCoreJsEngine>> _sharedQueue = new ConcurrentQueue<Action<ChakraCoreJsEngine>>();
-        private readonly AutoResetEvent _sharedQueueEnqeued = new AutoResetEvent(false);
+        private ConcurrentQueue<Action<ChakraCoreJsEngine>> _sharedQueue = new ConcurrentQueue<Action<ChakraCoreJsEngine>>();
+        private AutoResetEvent _sharedQueueEnqeued = new AutoResetEvent(false);
 
         public ZeroJsPool(ZeroJsPoolConfig config)
         {
@@ -33,7 +33,7 @@ namespace ZeroReact.JsPool
                         {
                             if (_engines.Count >= _config.StartEngines)
                             {
-                                _enginePopulater.WaitOne(1000);
+                                _enginePopulater?.WaitOne(1000);
                             }
 
                             //pupulater
@@ -54,7 +54,7 @@ namespace ZeroReact.JsPool
                                 if (engineAverageOverflow)
                                 {
                                     CreateEngine();
-                                    _enginePopulater.Set();
+                                    _enginePopulater?.Set();
                                 }
                             }
                         }
@@ -149,11 +149,7 @@ namespace ZeroReact.JsPool
             }
 
             engine.Dispose();
-
-            if (!_disposedFlag.IsSet())
-            {
-                _enginePopulater.Set();
-            }
+            _enginePopulater?.Set();
         }
 
         private InterlockedStatedFlag _disposedFlag = new InterlockedStatedFlag();
@@ -162,18 +158,24 @@ namespace ZeroReact.JsPool
             if (_disposedFlag.Set())
             {
                 _engineMaintenance.Set();
-                _enginePopulater.Set();
+                _engineMaintenance.Dispose();
+                _engineMaintenance = null;
 
-                _engineMaintenance.Close();
-                _enginePopulater.Close();
+                _enginePopulater.Set();
+                _enginePopulater.Dispose();
+                _enginePopulater = null;
 
                 foreach (var engine in _engines.Keys.ToArray())
                 {
                     DisposeEngine(engine);
                 }
 
-                _sharedQueue.Clear();
-                _sharedQueueEnqeued.Close();
+                var sharedQueue = _sharedQueue;
+                _sharedQueue = null;
+                sharedQueue.Clear();
+
+                _sharedQueueEnqeued.Dispose();
+                _sharedQueueEnqeued = null;
             }
         }
 

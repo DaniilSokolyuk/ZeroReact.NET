@@ -55,7 +55,7 @@ namespace JavaScriptEngineSwitcher.ChakraCore
             {
                 if (_sharedQueueEnqeued != null && _sharedQueue != null)
                 {
-                    WaitHandle.WaitAny(new[] { _queueEnqeued, _sharedQueueEnqeued }); //todo: optimize
+                    WaitHandle.WaitAny(new WaitHandle[] { _queueEnqeued, _sharedQueueEnqeued }); //todo: optimize
                 }
                 else if (_queue != null)
                 {
