@@ -18,7 +18,7 @@ namespace ZeroReact.Benchmarks
 
 
             BenchmarkRunner.Run<WebSimulateBenchmark>();
-            //BenchmarkRunner.Run<SingleComponentBenchmark>();
+            BenchmarkRunner.Run<SingleComponentBenchmark>();
             Console.ReadKey();
 		}
 	}

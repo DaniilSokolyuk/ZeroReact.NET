@@ -13,6 +13,27 @@ namespace ZeroReact.Benchmarks
 		private readonly NoTextWriter tk = new NoTextWriter(); //TODO: simulate PagedBufferedTextWriter
 
         [Benchmark]
+        public async Task ZeroReact_WebSimulation()
+        {
+            var tasks = Enumerable.Range(0, 15).Select(
+                async x =>
+                {
+                    using (var scope = sp.CreateScope())
+                    {
+                        var reactContext = scope.ServiceProvider.GetRequiredService<IReactScopedContext>();
+
+                        var component = reactContext.CreateComponent<ZeroReact.Components.ReactComponent>("HelloWorld");
+                        component.Props = _testData;
+                        component.ServerOnly = true;
+
+                        await component.RenderHtml();
+                    }
+                });
+
+            await Task.WhenAll(tasks);
+        }
+
+        [Benchmark]
         public async Task ReactJSNet_WebSimulation()
         {
 
@@ -29,26 +50,5 @@ namespace ZeroReact.Benchmarks
 
             await Task.WhenAll(tasks);
         }
-
-        [Benchmark]
-		public async Task ZeroReact_WebSimulation()
-		{
-		    var tasks = Enumerable.Range(0, 15).Select(
-		        async x =>
-		        {
-		            using (var scope = sp.CreateScope())
-		            {
-		                var reactContext = scope.ServiceProvider.GetRequiredService<IReactScopedContext>();
-
-		                var component = reactContext.CreateComponent<ZeroReact.Components.ReactComponent>("HelloWorld");
-		                component.Props = _testData;
-		                component.ServerOnly = true;
-
-		                await component.RenderHtml();
-		            }
-		        });
-
-		    await Task.WhenAll(tasks);
-		}
     }
 }

@@ -180,13 +180,9 @@ namespace ZeroReact.JsPool
                 }
                 catch (JsException ex)
                 {
-                    _scriptLoadException = new ZeroReactException(string.Format(
-                        "Error while loading \"{0}\": {1}",
-                        file,
-                        ex.Message
-                    ), ex);
+                    _scriptLoadException = new ZeroReactException($"Error while loading '{file}': {ex.Message}", ex);
                 }
-                catch (IOException ex)
+                catch (Exception ex)
                 {
                     _scriptLoadException = new ZeroReactException(ex.Message, ex);
                 }
@@ -225,7 +221,6 @@ namespace ZeroReact.JsPool
                 {
                     _pool.Dispose();
                     _pool = null;
-
                 }
             }
         }

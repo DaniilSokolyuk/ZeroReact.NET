@@ -68,9 +68,9 @@ namespace ZeroReact.Components
                 textWriter.Write(ComponentName);
                 textWriter.Write(",Object.assign(");
                 WriterSerialziedProps(textWriter);
-                textWriter.Write(",{location:'");
+                textWriter.Write(",{location:\"");
                 textWriter.Write(Path);
-                textWriter.Write("',context:context})))");
+                textWriter.Write("\",context:context})))");
 
                 return textWriter.GetMemoryOwner();
             }
