@@ -29,7 +29,7 @@ namespace ZeroReact.Benchmarks
 
 		protected void PopulateTestData()
 		{
-			for (int i = 0; i < 10000; i++)
+			for (int i = 0; i < 100; i++)
 			{
 				_testData.Add("key" + i, "value" + i);
 			}
@@ -45,7 +45,7 @@ namespace ZeroReact.Benchmarks
 					config.AddScriptWithoutTransform("Sample.js");
 					config.StartEngines = Math.Max(Environment.ProcessorCount, 4);
 					config.MaxEngines = Math.Max(Environment.ProcessorCount * 2, 8);
-					config.MaxUsagesPerEngine = Environment.ProcessorCount;
+					config.MaxUsagesPerEngine = 200;
 					config.AllowJavaScriptPrecompilation = false;
 				});
 
@@ -69,7 +69,7 @@ namespace ZeroReact.Benchmarks
 			configuration
 				.SetStartEngines(Math.Max(Environment.ProcessorCount, 4))
 				.SetMaxEngines(Math.Max(Environment.ProcessorCount * 2, 8))
-				.SetMaxUsagesPerEngine(Environment.ProcessorCount)
+				.SetMaxUsagesPerEngine(200)
 				.SetLoadBabel(false)
 				.AddScriptWithoutTransform("Sample.js");
 		}

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -15,40 +16,46 @@ namespace ZeroReact.Benchmarks
         [Benchmark]
         public async Task ZeroReact_WebSimulation()
         {
-            var tasks = Enumerable.Range(0, 15).Select(
-                async x =>
+            var tasks = Enumerable.Range(0, 10).Select(async x =>
+            {
+                using (var scope = sp.CreateScope())
                 {
-                    using (var scope = sp.CreateScope())
+                    foreach (var ind in Enumerable.Range(0, 25))
                     {
                         var reactContext = scope.ServiceProvider.GetRequiredService<IReactScopedContext>();
 
                         var component = reactContext.CreateComponent<ZeroReact.Components.ReactComponent>("HelloWorld");
                         component.Props = _testData;
-                        component.ServerOnly = true;
 
                         await component.RenderHtml();
+
+                        component.WriteOutputHtmlTo(tk);
                     }
-                });
+
+                    scope.ServiceProvider.GetRequiredService<IReactScopedContext>().GetInitJavaScript(tk);
+                }
+            });
 
             await Task.WhenAll(tasks);
         }
 
         [Benchmark]
-        public async Task ReactJSNet_WebSimulation()
+        public void ReactJSNet_WebSimulation()
         {
-
-            var tasks = Enumerable.Range(0, 15).Select(
-                async x =>
+            Parallel.For(0, 10, i =>
+            {
+                var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();
+                foreach (var ind in Enumerable.Range(0, 25))
                 {
-                    var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();
-                    var component = environment.CreateComponent("HelloWorld", _testData, serverOnly: true);
+                    var component = environment.CreateComponent("HelloWorld", _testData);
 
-                    component.RenderHtml(tk, renderServerOnly: true);
+                    component.RenderHtml(tk);
                     environment.ReturnEngineToPool();
-                    await Task.Delay(0);
-                });
+                }
 
-            await Task.WhenAll(tasks);
+                environment.GetInitJavaScript(tk);
+                ((IDisposable) environment).Dispose();
+            });
         }
     }
 }

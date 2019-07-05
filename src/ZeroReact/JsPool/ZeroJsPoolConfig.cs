@@ -17,6 +17,5 @@ namespace ZeroReact.JsPool
         public int StartEngines { get; set; }
         public int MaxEngines { get; set; }
         public int MaxUsagesPerEngine { get; set; }
-        public int GarbageCollectionInterval { get; set; }
     }
 }

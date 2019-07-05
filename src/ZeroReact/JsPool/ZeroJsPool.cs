@@ -84,11 +84,6 @@ namespace ZeroReact.JsPool
                                 {
                                     DisposeEngine(maintenangeEngine);
                                 }
-                                else if (maintenangeEngine.SupportsGarbageCollection &&
-                                         _config.GarbageCollectionInterval > 0) //gc
-                                {
-                                    maintenangeEngine.CollectGarbage();
-                                }
                             }
                         }
                     })
@@ -206,8 +201,7 @@ namespace ZeroReact.JsPool
                 {
                     if (_engines.TryGetValue(jsEngine, out var usageCount) && _engines.TryUpdate(jsEngine, usageCount + 1, usageCount))
                     {
-                        if ((_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine) ||
-                            (_config.GarbageCollectionInterval > 0 && usageCount % _config.GarbageCollectionInterval == 0))
+                        if (_config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine)
                         {
                             MaintenanceEngine(jsEngine);
                         }
