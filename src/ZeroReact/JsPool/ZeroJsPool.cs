@@ -15,9 +15,7 @@ namespace ZeroReact.JsPool
 
         private readonly ConcurrentDictionary<ChakraCoreJsEngine, int> _engines = new ConcurrentDictionary<ChakraCoreJsEngine, int>();
         private AutoResetEvent _enginePopulater = new AutoResetEvent(false);
-
         private AutoResetEvent _engineMaintenance = new AutoResetEvent(false);
-        private readonly ConcurrentQueue<ChakraCoreJsEngine> _enginesToMaintenance = new ConcurrentQueue<ChakraCoreJsEngine>();
 
         private ConcurrentQueue<Action<ChakraCoreJsEngine>> _sharedQueue = new ConcurrentQueue<Action<ChakraCoreJsEngine>>();
         private AutoResetEvent _sharedQueueEnqeued = new AutoResetEvent(false);
@@ -43,7 +41,8 @@ namespace ZeroReact.JsPool
                             }
 
                             //MaxUsagesPerEngine
-                            if (!_disposedFlag.IsSet() && _config.MaxUsagesPerEngine > 0 &&
+                            if (!_disposedFlag.IsSet() && 
+                                _config.MaxUsagesPerEngine > 0 &&
                                 _engines.Count < _config.MaxEngines)
                             {
                                 var currentUsages = _engines.Values.Sum();
@@ -61,35 +60,43 @@ namespace ZeroReact.JsPool
                     })
                 {
                     IsBackground = true,
-                    Name = "Engine creator"
+                    Name = "ZeroReact Engine creator"
                 }
                 .Start();
 
             new Thread(
                     () =>
                     {
-                        while (!_disposedFlag.IsSet())
+                        while (!_disposedFlag.IsSet() && _config.MaxUsagesPerEngine > 0)
                         {
-                            _engineMaintenance.WaitOne();
+                            _engineMaintenance?.WaitOne();
 
-                            while (_enginesToMaintenance.TryDequeue(out var maintenangeEngine))
+                            var engineToDispose = _engines
+                                .Where(x => x.Value >= _config.MaxUsagesPerEngine)
+                                .OrderByDescending(x => x.Value)
+                                .Select(x => x.Key)
+                                .ToArray();
+
+                            bool anyDisposed = false;
+
+                            foreach (var engine in engineToDispose)
                             {
-                                if (_disposedFlag.IsSet())
+                                if (!_disposedFlag.IsSet() && _engines.Count >= _config.StartEngines)
                                 {
-                                    return;
+                                    DisposeEngine(engine);
+                                    anyDisposed = true;
                                 }
+                            }
 
-                                if (!_engines.TryGetValue(maintenangeEngine, out var usageCount) ||
-                                    (_engines.Count > _config.StartEngines && _config.MaxUsagesPerEngine > 0 && usageCount >= _config.MaxUsagesPerEngine))
-                                {
-                                    DisposeEngine(maintenangeEngine);
-                                }
+                            if (anyDisposed)
+                            {
+                                _engineMaintenance.Set();
                             }
                         }
                     })
                 {
                     IsBackground = true,
-                    Name = "Engine maintenance"
+                    Name = "ZeroReact Engine destroyer"
                 }
                 .Start();
         }
@@ -221,7 +228,6 @@ namespace ZeroReact.JsPool
                 return;
             }
 
-            _enginesToMaintenance.Enqueue(engine);
             _engineMaintenance.Set();
         }
     }
