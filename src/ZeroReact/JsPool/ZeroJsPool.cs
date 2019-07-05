@@ -31,7 +31,7 @@ namespace ZeroReact.JsPool
                         {
                             if (_engines.Count >= _config.StartEngines)
                             {
-                                _enginePopulater?.WaitOne(1000);
+                                _enginePopulater?.WaitOne(500);
                             }
 
                             //pupulater
@@ -86,11 +86,15 @@ namespace ZeroReact.JsPool
                                     DisposeEngine(engine);
                                     anyDisposed = true;
                                 }
+                                else
+                                {
+                                    break;
+                                }
                             }
 
                             if (anyDisposed)
                             {
-                                _engineMaintenance.Set();
+                                _engineMaintenance?.Set();
                             }
                         }
                     })
