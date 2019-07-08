@@ -48,7 +48,7 @@ namespace ZeroReact.JsPool
                                 var currentUsages = _engines.Values.Sum();
                                 var maxUsages = _engines.Count * _config.MaxUsagesPerEngine;
 
-                                var engineAverageOverflow = currentUsages > maxUsages * 0.7;
+                                var engineAverageOverflow = currentUsages > maxUsages * 0.5;
 
                                 if (engineAverageOverflow)
                                 {
@@ -75,7 +75,7 @@ namespace ZeroReact.JsPool
                                 .Where(x => x.Value >= _config.MaxUsagesPerEngine)
                                 .OrderByDescending(x => x.Value)
                                 .Select(x => x.Key)
-                                .ToArray();
+                                .Take(2); //maxiumum 2 engines to dispose
 
                             bool anyDisposed = false;
 
@@ -92,8 +92,9 @@ namespace ZeroReact.JsPool
                                 }
                             }
 
-                            if (anyDisposed)
+                            if (!_disposedFlag.IsSet() && anyDisposed)
                             {
+                                _enginePopulater?.Set();
                                 _engineMaintenance?.Set();
                             }
                         }

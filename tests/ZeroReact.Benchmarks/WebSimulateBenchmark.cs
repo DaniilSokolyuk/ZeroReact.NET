@@ -16,11 +16,11 @@ namespace ZeroReact.Benchmarks
         [Benchmark]
         public async Task ZeroReact_WebSimulation()
         {
-            var tasks = Enumerable.Range(0, 10).Select(async x =>
+            var tasks = Enumerable.Range(0, 20).Select(async x =>
             {
                 using (var scope = sp.CreateScope())
                 {
-                    foreach (var ind in Enumerable.Range(0, 25))
+                    foreach (var ind in Enumerable.Range(0, 30))
                     {
                         var reactContext = scope.ServiceProvider.GetRequiredService<IReactScopedContext>();
 
@@ -42,10 +42,10 @@ namespace ZeroReact.Benchmarks
         [Benchmark]
         public void ReactJSNet_WebSimulation()
         {
-            Parallel.For(0, 10, i =>
+            Parallel.For(0, 20, i =>
             {
                 var environment = AssemblyRegistration.Container.Resolve<IReactEnvironment>();
-                foreach (var ind in Enumerable.Range(0, 25))
+                foreach (var ind in Enumerable.Range(0, 30))
                 {
                     var component = environment.CreateComponent("HelloWorld", _testData);
 
