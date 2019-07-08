@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup>
-        <VersionPrefix>0.0.6-alpha</VersionPrefix>
+        <VersionPrefix>1.0.0</VersionPrefix>
 
         <PackageProjectUrl>https://github.com/DaniilSokolyuk/ZeroReact.NET</PackageProjectUrl>
         <RepositoryUrl>https://github.com/DaniilSokolyuk/ZeroReact.NET</RepositoryUrl>
